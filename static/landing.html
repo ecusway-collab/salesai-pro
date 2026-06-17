@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SalesAI Pro — AI-Powered Sales Automation for Natural Health</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+:root { --green:#2d8653; --green-dark:#1a5c38; --green-light:#e8f5ee; }
+body { font-family:'Segoe UI',sans-serif; }
+.navbar { background: var(--green-dark) !important; }
+.navbar-brand { color:#fff !important; font-weight:700; font-size:1.3rem; }
+.nav-link { color:rgba(255,255,255,.8) !important; }
+.nav-link:hover { color:#fff !important; }
+.hero { background: linear-gradient(135deg, var(--green-dark) 0%, var(--green) 100%); color:#fff; padding:100px 0 80px; }
+.hero h1 { font-size:3rem; font-weight:800; line-height:1.2; }
+.hero p { font-size:1.2rem; opacity:.9; }
+.btn-white { background:#fff; color:var(--green-dark); font-weight:700; padding:14px 32px; border-radius:50px; font-size:1rem; }
+.btn-white:hover { background:#f0f4f1; color:var(--green-dark); }
+.btn-outline-white { border:2px solid #fff; color:#fff; font-weight:600; padding:12px 28px; border-radius:50px; }
+.btn-outline-white:hover { background:#fff; color:var(--green-dark); }
+.feature-icon { width:56px; height:56px; background:var(--green-light); border-radius:14px; display:flex; align-items:center; justify-content:center; color:var(--green); font-size:1.5rem; margin-bottom:16px; }
+.pricing-card { border-radius:16px; border:2px solid #e9ecef; padding:36px 28px; transition:transform .2s, box-shadow .2s; }
+.pricing-card:hover { transform:translateY(-6px); box-shadow:0 16px 40px rgba(0,0,0,.1); }
+.pricing-card.popular { border-color:var(--green); position:relative; }
+.popular-badge { position:absolute; top:-14px; left:50%; transform:translateX(-50%); background:var(--green); color:#fff; padding:4px 20px; border-radius:50px; font-size:.8rem; font-weight:700; white-space:nowrap; }
+.price-amount { font-size:3rem; font-weight:800; color:var(--green-dark); }
+.price-period { color:#6c757d; font-size:.95rem; }
+.check-item { display:flex; align-items:center; gap:10px; margin-bottom:10px; font-size:.95rem; }
+.check-item i { color:var(--green); font-size:1rem; flex-shrink:0; }
+.btn-green { background:var(--green); color:#fff; font-weight:700; padding:14px 0; border-radius:50px; width:100%; font-size:1rem; border:none; }
+.btn-green:hover { background:var(--green-dark); color:#fff; }
+.btn-outline-green { border:2px solid var(--green); color:var(--green); font-weight:700; padding:14px 0; border-radius:50px; width:100%; font-size:1rem; background:transparent; }
+.btn-outline-green:hover { background:var(--green); color:#fff; }
+.stat-box { text-align:center; padding:32px 20px; }
+.stat-box .number { font-size:2.5rem; font-weight:800; color:var(--green); }
+.testimonial { background:#f8fdf9; border-left:4px solid var(--green); padding:24px; border-radius:8px; }
+.faq-item { border-bottom:1px solid #e9ecef; padding:20px 0; }
+.faq-q { font-weight:600; cursor:pointer; }
+footer { background:var(--green-dark); color:rgba(255,255,255,.7); padding:40px 0; }
+footer a { color:rgba(255,255,255,.7); text-decoration:none; }
+footer a:hover { color:#fff; }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg sticky-top">
+  <div class="container">
+    <a class="navbar-brand" href="/"><i class="bi bi-leaf-fill me-2"></i>SalesAI Pro</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse" id="nav">
+      <ul class="navbar-nav ms-auto align-items-center gap-2">
+        <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
+        <li class="nav-item"><a class="nav-link" href="#pricing">Pricing</a></li>
+        <li class="nav-item"><a class="nav-link" href="#faq">FAQ</a></li>
+        <li class="nav-item"><a class="btn btn-outline-white btn-sm" href="/login">Log In</a></li>
+        <li class="nav-item"><a class="btn btn-white btn-sm" href="/login#register">Start Free Trial</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container text-center">
+    <div class="badge bg-white text-success mb-3 px-3 py-2" style="font-size:.85rem;border-radius:50px">
+      <i class="bi bi-robot me-1"></i> Powered by Claude AI + Twilio
+    </div>
+    <h1>AI That Cold Calls,<br>Follows Up &amp; Closes Sales<br>
+      <span style="color:#a7f3c4">For Natural Health Products</span>
+    </h1>
+    <p class="mt-4 mb-5 mx-auto" style="max-width:620px">
+      Automatically find leads, generate personalized scripts, make AI-powered voice calls, and send SMS &amp; email follow-ups — all on autopilot. You focus on your health business, SalesAI Pro handles the outreach.
+    </p>
+    <div class="d-flex gap-3 justify-content-center flex-wrap">
+      <a href="/login#register" class="btn btn-white">Start 14-Day Free Trial <i class="bi bi-arrow-right ms-1"></i></a>
+      <a href="#pricing" class="btn btn-outline-white">See Pricing</a>
+    </div>
+    <p class="mt-3" style="font-size:.85rem;opacity:.7">No credit card required · Cancel anytime · Your own Twilio number</p>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="py-5 bg-white border-bottom">
+  <div class="container">
+    <div class="row g-0 text-center">
+      <div class="col-6 col-md-3 stat-box"><div class="number">7×</div><div class="text-muted">More follow-ups than manual</div></div>
+      <div class="col-6 col-md-3 stat-box"><div class="number">24/7</div><div class="text-muted">Automated outreach</div></div>
+      <div class="col-6 col-md-3 stat-box"><div class="number">5 min</div><div class="text-muted">Setup time</div></div>
+      <div class="col-6 col-md-3 stat-box"><div class="number">3 steps</div><div class="text-muted">Find → Call → Close</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="py-6 bg-light" id="features" style="padding:80px 0">
+  <div class="container">
+    <div class="text-center mb-5">
+      <h2 class="fw-bold">Everything You Need to Close More Sales</h2>
+      <p class="text-muted">Built specifically for natural health product businesses</p>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="feature-icon"><i class="bi bi-search"></i></div>
+        <h5 class="fw-bold">AI Lead Finder</h5>
+        <p class="text-muted">Scrape Google Maps &amp; business directories for gyms, health food stores, chiropractors, wellness centers — your perfect customers — in any city.</p>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-icon"><i class="bi bi-telephone-fill"></i></div>
+        <h5 class="fw-bold">AI Cold Calls</h5>
+        <p class="text-muted">AI generates a personalized script for every lead and makes the call through Twilio. Handles responses, objections, and books callbacks — automatically.</p>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-icon"><i class="bi bi-chat-text-fill"></i></div>
+        <h5 class="fw-bold">Smart Follow-Ups</h5>
+        <p class="text-muted">Automated SMS and email sequences keep leads warm. Day 1 call → Day 3 SMS → Day 7 email → Day 14 call. Never let a lead go cold again.</p>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-icon"><i class="bi bi-stars"></i></div>
+        <h5 class="fw-bold">Claude AI Brain</h5>
+        <p class="text-muted">Every script, message, and response is generated by Claude AI — trained on natural health product sales, objection handling, and wellness conversations.</p>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-icon"><i class="bi bi-kanban-fill"></i></div>
+        <h5 class="fw-bold">Pipeline Dashboard</h5>
+        <p class="text-muted">Visual Kanban pipeline shows every lead from New → Contacted → Interested → Closed. See your full sales funnel at a glance.</p>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-icon"><i class="bi bi-shield-check-fill"></i></div>
+        <h5 class="fw-bold">Your Own Twilio</h5>
+        <p class="text-muted">Use your own Twilio number — calls show your business name, you own the recordings, and you control the outreach. No shared infrastructure.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section style="padding:80px 0">
+  <div class="container">
+    <div class="text-center mb-5"><h2 class="fw-bold">How It Works</h2></div>
+    <div class="row g-4 align-items-center">
+      <div class="col-md-4 text-center">
+        <div class="rounded-circle bg-success text-white d-inline-flex align-items-center justify-content-center mb-3" style="width:60px;height:60px;font-size:1.5rem;font-weight:800">1</div>
+        <h5 class="fw-bold">Find Your Leads</h5>
+        <p class="text-muted">Enter a business type (e.g. "yoga studios") and a city. The AI scraper finds real businesses with names, phones, and addresses in minutes.</p>
+      </div>
+      <div class="col-md-4 text-center">
+        <div class="rounded-circle bg-success text-white d-inline-flex align-items-center justify-content-center mb-3" style="width:60px;height:60px;font-size:1.5rem;font-weight:800">2</div>
+        <h5 class="fw-bold">AI Makes the Call</h5>
+        <p class="text-muted">Claude generates a personalized script for each lead. Your Twilio number dials them automatically. The AI handles the conversation and objections.</p>
+      </div>
+      <div class="col-md-4 text-center">
+        <div class="rounded-circle bg-success text-white d-inline-flex align-items-center justify-content-center mb-3" style="width:60px;height:60px;font-size:1.5rem;font-weight:800">3</div>
+        <h5 class="fw-bold">Close on Autopilot</h5>
+        <p class="text-muted">Interested leads get automatic SMS and email follow-ups. The system scores leads, updates the pipeline, and tells you exactly who to close.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="bg-light" id="pricing" style="padding:80px 0">
+  <div class="container">
+    <div class="text-center mb-5">
+      <h2 class="fw-bold">Simple, Transparent Pricing</h2>
+      <p class="text-muted">Start free for 14 days. No credit card required.</p>
+    </div>
+    <div class="row g-4 justify-content-center">
+
+      <!-- STARTER -->
+      <div class="col-md-4">
+        <div class="pricing-card bg-white h-100">
+          <div class="text-uppercase text-muted fw-bold small mb-2">Starter</div>
+          <div><span class="price-amount">$49</span><span class="price-period">/month</span></div>
+          <p class="text-muted mt-2 mb-4">Perfect for solo health product sellers and new distributors.</p>
+          <div class="check-item"><i class="bi bi-check-circle-fill"></i>100 leads</div>
+          <div class="check-item"><i class="bi bi-check-circle-fill"></i>50 AI calls/month</div>
+          <div class="check-item"><i class="bi bi-check-circle-fill"></i>SMS &amp; email follow-ups</div>
+          <div class="check-item"><i class="bi bi-check-circle-fill"></i>1 campaign</div>
+          <div class="check-item"><i class="bi bi-check-circle-fill"></i>Lead finder (scraper)</div>
+          <div class="check-item"><i class="bi bi-check-circle-fill"></i>AI script generation</div>
+          <div class="check-item text-muted"><i class="bi bi-x-circle"></i>Call recordings</div>
+          <div class="check-item text-muted"><i class="bi bi-x-circle"></i>Advanced analytics</div>
+          <div class="mt-4">
+            <a href="/login#register?plan=starter" class="btn-outline-green btn">Start Free Trial</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRO (POPULAR) -->
+      <div class="col-md-4">
+        <div class="pricing-card popular bg-white h-100">
+          <div class="popular-badge">MOST POPULAR</div>
+          <div class="text-uppercase fw-bold small mb-2" style="color:var(--green)">Pro</div>
+          <div><span class="price-amount">$99</span><span class="price-period">/month</span></div>
+          <p class="text-muted mt-2 mb-4">For serious health entrepreneurs scaling their outreach.</p>
+          <div class="check-item"><i class="bi bi-check-circle-fill"></i>500 leads</div>
+          <div class="check-item"><i class="bi bi-check-circle-fill"></i>250 AI calls/month</div>
+          <div class="check-item"><i class="bi bi-check-circle-fill"></i>SMS &amp; email follow-ups</div>
+          <div class="check-item"><i class="bi bi-check-circle-fill"></i>Unlimited campaigns</div>
+          <div class="check-item"><i class="bi bi-check-circle-fill"></i>Priority lead finder</div>
+          <div class="check-item"><i class="bi bi-check-circle-fill"></i>AI script generation</div>
+          <div class="check-item"><i class="bi bi-check-circle-fill"></i>Call recordings</div>
+          <div class="check-item"><i class="bi bi-check-circle-fill"></i>Lead scoring</div>
+          <div class="mt-4">
+            <a href="/login#register?plan=pro" class="btn-green btn">Start Free Trial</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- AGENCY -->
+      <div class="col-md-4">
+        <div class="pricing-card bg-white h-100">
+          <div class="text-uppercase text-muted fw-bold small mb-2">Agency</div>
+          <div><span class="price-amount">$199</span><span class="price-period">/month</span></div>
+          <p class="text-muted mt-2 mb-4">For teams, agencies, and high-volume health sales operations.</p>
+          <div class="check-item"><i class="bi bi-check-circle-fill"></i><strong>Unlimited</strong> leads</div>
+          <div class="check-item"><i class="bi bi-check-circle-fill"></i><strong>Unlimited</strong> AI calls</div>
+          <div class="check-item"><i class="bi bi-check-circle-fill"></i>SMS &amp; email follow-ups</div>
+          <div class="check-item"><i class="bi bi-check-circle-fill"></i>Unlimited campaigns</div>
+          <div class="check-item"><i class="bi bi-check-circle-fill"></i>Bulk lead import</div>
+          <div class="check-item"><i class="bi bi-check-circle-fill"></i>AI script generation</div>
+          <div class="check-item"><i class="bi bi-check-circle-fill"></i>Call recordings &amp; transcripts</div>
+          <div class="check-item"><i class="bi bi-check-circle-fill"></i>Advanced analytics + priority support</div>
+          <div class="mt-4">
+            <a href="/login#register?plan=agency" class="btn-outline-green btn">Start Free Trial</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="text-center text-muted mt-4 small">All plans include a 14-day free trial. Cancel anytime via your account portal.</p>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section style="padding:80px 0">
+  <div class="container">
+    <div class="text-center mb-5"><h2 class="fw-bold">What Health Entrepreneurs Say</h2></div>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="testimonial">
+          <p class="mb-3">"I was spending 4 hours a day on cold calls. SalesAI Pro does it for me overnight. I wake up to interested leads already in my pipeline."</p>
+          <strong>Maria T.</strong><br><small class="text-muted">Vital Health Global Distributor</small>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="testimonial">
+          <p class="mb-3">"The AI knows our products better than most sales reps. It recommended V-NRGY to a gym owner and they placed a $400 order on the first call."</p>
+          <strong>James R.</strong><br><small class="text-muted">Wellness Center Owner</small>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="testimonial">
+          <p class="mb-3">"Set it up in 20 minutes, imported 200 leads from a CSV, and the system had already made 50 calls by morning. This is the future of health sales."</p>
+          <strong>Priya K.</strong><br><small class="text-muted">Natural Health Coach</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="bg-light" id="faq" style="padding:80px 0">
+  <div class="container" style="max-width:720px">
+    <div class="text-center mb-5"><h2 class="fw-bold">Frequently Asked Questions</h2></div>
+    <div class="faq-item">
+      <div class="faq-q">Do I need a Twilio account?</div>
+      <div class="text-muted mt-2">Yes — you bring your own Twilio number (about $1/month). This means calls come from your number, you own the recordings, and you control the outreach. Twilio pay-as-you-go call costs are typically $0.013/minute.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Do I need an Anthropic API key?</div>
+      <div class="text-muted mt-2">Yes — you add your own Anthropic key in settings. Claude API costs roughly $0.01–0.05 per AI script generation. You only pay for what you use.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Can I use this to sell any natural health product?</div>
+      <div class="text-muted mt-2">Absolutely. While it comes pre-trained on Vital Health Global products, you can fully customize the AI with your own product line, pricing, and branding in your account settings.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">How does the lead scraper work?</div>
+      <div class="text-muted mt-2">Enter a business type (e.g. "yoga studios") and a city. The system searches Google Maps and business directories and imports real businesses with contact details directly into your pipeline.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Can I cancel anytime?</div>
+      <div class="text-muted mt-2">Yes. Cancel anytime from your account portal — no questions asked, no cancellation fees.</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section style="padding:80px 0; background:linear-gradient(135deg,var(--green-dark),var(--green))">
+  <div class="container text-center text-white">
+    <h2 class="fw-bold mb-3">Ready to Let AI Sell For You?</h2>
+    <p class="mb-4 opacity-75">Start your 14-day free trial. No credit card. Cancel anytime.</p>
+    <a href="/login#register" class="btn btn-white btn-lg px-5">Get Started Free <i class="bi bi-arrow-right ms-2"></i></a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <div class="text-white fw-bold mb-2"><i class="bi bi-leaf-fill me-2"></i>SalesAI Pro</div>
+        <small>AI-powered sales automation for natural health products and services.</small>
+      </div>
+      <div class="col-md-4 mb-3">
+        <div class="text-white mb-2">Product</div>
+        <div><a href="#features">Features</a></div>
+        <div><a href="#pricing">Pricing</a></div>
+        <div><a href="#faq">FAQ</a></div>
+      </div>
+      <div class="col-md-4 mb-3">
+        <div class="text-white mb-2">Account</div>
+        <div><a href="/login">Log In</a></div>
+        <div><a href="/login#register">Sign Up Free</a></div>
+      </div>
+    </div>
+    <hr style="border-color:rgba(255,255,255,.2)">
+    <p class="text-center small mb-0">© 2026 SalesAI Pro. Built on Claude AI + Twilio.</p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

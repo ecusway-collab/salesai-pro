@@ -1,0 +1,61 @@
+services:
+  - type: web
+    name: getfreeproducts-salesai
+    env: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: salesai-db
+          property: connectionString
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_PHONE_NUMBER
+        sync: false
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: FROM_EMAIL
+        value: noreply@getfreeproducts.net
+      - key: FROM_NAME
+        value: Vital Health Global
+      - key: GOOGLE_MAPS_API_KEY
+        sync: false
+      - key: BASE_URL
+        value: https://getfreeproducts.net
+      - key: SECRET_KEY
+        generateValue: true
+      - key: COMPANY_NAME
+        value: Vital Health Global
+      - key: AGENT_NAME
+        value: Alex
+      - key: SHOP_URL
+        value: https://vitalhealthglobal.com/collections/all?refID=67597
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "60"
+      - key: TRIAL_DAYS
+        value: "14"
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_PRICE_STARTER
+        sync: false
+      - key: STRIPE_PRICE_PRO
+        sync: false
+      - key: STRIPE_PRICE_AGENCY
+        sync: false
+
+databases:
+  - name: salesai-db
+    plan: free

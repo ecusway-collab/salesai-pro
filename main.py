@@ -1,0 +1,77 @@
+"""SalesAI Pro — Multi-tenant SaaS entry point."""
+import logging
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from database import init_db
+from core.scheduler import start_scheduler, stop_scheduler
+from routers import leads, campaigns, calls, webhooks, scraper
+from routers import auth, billing
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Starting SalesAI Pro...")
+    init_db()
+    start_scheduler()
+    logger.info("Ready. Open http://localhost:8000")
+    yield
+    stop_scheduler()
+
+
+app = FastAPI(
+    title="SalesAI Pro",
+    description="AI-powered sales automation SaaS for natural health products",
+    version="2.0.0",
+    lifespan=lifespan,
+)
+
+# ── Routers ───────────────────────────────────────────────────────────────────
+app.include_router(auth.router)
+app.include_router(billing.router)
+app.include_router(leads.router)
+app.include_router(campaigns.router)
+app.include_router(calls.router)
+app.include_router(webhooks.router)
+app.include_router(scraper.router)
+
+# ── Static files ──────────────────────────────────────────────────────────────
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
+# ── Pages ─────────────────────────────────────────────────────────────────────
+@app.get("/", include_in_schema=False)
+def landing():
+    return FileResponse("static/landing.html")
+
+
+@app.get("/login", include_in_schema=False)
+def login_page():
+    return FileResponse("static/login.html")
+
+
+@app.get("/dashboard", include_in_schema=False)
+def dashboard():
+    return FileResponse("static/index.html")
+
+
+@app.get("/billing/success", include_in_schema=False)
+def billing_success():
+    return FileResponse("static/index.html")
+
+
+@app.get("/pricing", include_in_schema=False)
+def pricing():
+    return FileResponse("static/landing.html")
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok", "service": "SalesAI Pro", "version": "2.0.0"}
