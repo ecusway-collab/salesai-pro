@@ -83,20 +83,24 @@ NEVER: Make medical diagnoses, guarantee outcomes, use fear tactics, or claim to
 
 def _call_claude(messages: list, max_tokens: int = 1000, user=None) -> str:
     """Make a Claude API call with prompt caching on the system prompt."""
-    client = _get_client(user)
-    response = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=max_tokens,
-        system=[
-            {
-                "type": "text",
-                "text": _SYSTEM_PROMPT,
-                "cache_control": {"type": "ephemeral"},
-            }
-        ],
-        messages=messages,
-    )
-    return response.content[0].text
+    try:
+        client = _get_client(user)
+        response = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=max_tokens,
+            system=[
+                {
+                    "type": "text",
+                    "text": _SYSTEM_PROMPT,
+                    "cache_control": {"type": "ephemeral"},
+                }
+            ],
+            messages=messages,
+        )
+        return response.content[0].text
+    except Exception as e:
+        logger.error(f"Claude API error: {e}")
+        raise
 
 
 def _extract_json(text: str) -> dict:
@@ -159,8 +163,19 @@ Return a JSON object with these exact fields:
   "voicemail_script": "Max 25-second voicemail if they don't answer"
 }}"""
 
-    text = _call_claude([{"role": "user", "content": prompt}], max_tokens=1500, user=user)
-    return _extract_json(text)
+    try:
+        text = _call_claude([{"role": "user", "content": prompt}], max_tokens=1500, user=user)
+        return _extract_json(text)
+    except Exception:
+        name = lead.get('name', 'there')
+        return {
+            "opening": f"Hi {name}, my name is Alex calling from Vital Health Global. I'm reaching out because we help people discover natural health solutions for energy, wellness, and vitality. Do you have just 60 seconds?",
+            "discovery_questions": ["What's your biggest health concern right now?", "Have you tried natural supplements before?", "What does your ideal wellness routine look like?"],
+            "value_proposition": "Vital Health Global offers premium natural health products backed by science. From energy boosters to anti-aging solutions, we have products that fit every lifestyle and health goal.",
+            "objection_handlers": {"too expensive": "I understand — we also have starter bundles and an affiliate program where you can earn while you shop.", "not interested": "No problem at all! Can I send you some information to review at your own pace?"},
+            "call_to_action": "I'd love to send you our product guide. What's the best email for you?",
+            "voicemail_script": f"Hi {name}, this is Alex from Vital Health Global. I'm calling to share some exciting natural health solutions that may be perfect for you. Please call me back or visit getfreeproducts.net. Have a great day!",
+        }
 
 
 def generate_sms_message(lead: dict, interaction_history: list, followup_number: int, user=None) -> str:
