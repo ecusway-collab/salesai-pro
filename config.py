@@ -4,6 +4,8 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     ANTHROPIC_API_KEY: str = ""
+    ELEVENLABS_API_KEY: str = ""
+    ELEVENLABS_VOICE_ID: str = "EXAVITQu4vr4xnSDxMaL"
     TWILIO_ACCOUNT_SID: str = ""
     TWILIO_AUTH_TOKEN: str = ""
     TWILIO_PHONE_NUMBER: str = ""

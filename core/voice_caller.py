@@ -82,6 +82,35 @@ def build_call_twiml(opening: str, gather_action_url: str) -> str:
     return str(response)
 
 
+def build_call_twiml_elevenlabs(opening: str, gather_action_url: str, audio_url: str) -> str:
+    """TwiML that plays ElevenLabs audio for the opening, then gathers response."""
+    response = VoiceResponse()
+
+    gather = Gather(
+        input="speech dtmf",
+        action=gather_action_url,
+        method="POST",
+        speech_timeout="3",
+        timeout=10,
+        num_digits=1,
+    )
+    gather.play(audio_url)
+    gather.say(
+        "Press 1 to learn more, press 2 to be removed from our list, "
+        "or just speak your response.",
+        voice="Polly.Joanna-Neural",
+    )
+    response.append(gather)
+
+    response.say(
+        "I didn't catch that — no problem at all! I'll follow up another time. "
+        "Have a wonderful and healthy day!",
+        voice="Polly.Joanna-Neural",
+    )
+    response.hangup()
+    return str(response)
+
+
 def build_voicemail_twiml(voicemail_script: str) -> str:
     """TwiML for leaving a voicemail on an answering machine."""
     response = VoiceResponse()

@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models import Lead, Interaction
-from core.voice_caller import build_call_twiml, build_voicemail_twiml, build_response_twiml
+from core.voice_caller import build_call_twiml, build_call_twiml_elevenlabs, build_voicemail_twiml, build_response_twiml
 from core.ai_engine import analyze_interaction, generate_cold_call_script, handle_objection
 
 logger = logging.getLogger(__name__)
@@ -42,7 +42,12 @@ async def voice_answer(request: Request, lead_id: int, db: Session = Depends(get
         opening = script.get("opening", f"Hi {name}, this is {_agent_name()} calling from Vital Health Global. I hope I'm not catching you at a bad time? We help people discover natural health solutions for energy, wellness and vitality. Do you have just 60 seconds?")
 
         gather_url = f"{_base_url()}/webhooks/voice/gather?lead_id={lead_id}"
-        twiml = build_call_twiml(opening, gather_url)
+        from config import settings as _s
+        if _s.ELEVENLABS_API_KEY:
+            audio_url = f"{_base_url()}/webhooks/audio/lead/{lead_id}.mp3"
+            twiml = build_call_twiml_elevenlabs(opening, gather_url, audio_url)
+        else:
+            twiml = build_call_twiml(opening, gather_url)
         return xml_response(twiml)
     except Exception as e:
         logger.error(f"voice_answer error for lead {lead_id}: {e}")
@@ -294,6 +299,42 @@ async def sms_status(request: Request, lead_id: int, db: Session = Depends(get_d
     message_status = form.get("MessageStatus", "")
     logger.info(f"SMS status for lead {lead_id}: {message_status}")
     return Response(status_code=204)
+
+
+@router.get("/audio/lead/{lead_id}.mp3")
+async def call_audio(lead_id: int, db: Session = Depends(get_db)):
+    """Generate ElevenLabs audio for the lead's call opening. Twilio plays this via <Play>."""
+    from fastapi.responses import Response as FastResponse
+    from core.tts import generate_audio
+    import json
+
+    lead = db.query(Lead).filter(Lead.id == lead_id).first()
+    name = lead.name if lead else "there"
+
+    interaction = (
+        db.query(Interaction)
+        .filter(Interaction.lead_id == lead_id, Interaction.type == "call")
+        .order_by(Interaction.created_at.desc())
+        .first()
+    )
+
+    text = (
+        f"Hi {name}, this is Alex calling from Vital Health Global. "
+        f"We help people discover natural health solutions for energy, wellness and vitality. "
+        f"Do you have just 60 seconds?"
+    )
+    if interaction and interaction.content:
+        try:
+            script = json.loads(interaction.content)
+            text = script.get("opening", text)
+        except Exception:
+            pass
+
+    audio = generate_audio(text)
+    if not audio:
+        raise HTTPException(503, "TTS unavailable")
+
+    return FastResponse(content=audio, media_type="audio/mpeg")
 
 
 def _base_url() -> str:
