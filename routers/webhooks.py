@@ -27,22 +27,30 @@ async def voice_answer(request: Request, lead_id: int, db: Session = Depends(get
     Called by Twilio when a lead picks up the phone.
     Returns TwiML with the AI-generated opening script.
     """
-    lead = db.query(Lead).filter(Lead.id == lead_id).first()
-    if not lead:
-        r = build_voicemail_twiml("Sorry, we called the wrong number. Have a great day!")
-        return xml_response(r)
+    try:
+        lead = db.query(Lead).filter(Lead.id == lead_id).first()
+        name = lead.name if lead else "there"
 
-    lead_dict = {
-        "name": lead.name, "company": lead.company or "",
-        "health_interest": lead.health_interest or "",
-        "pain_points": lead.pain_points or "", "notes": lead.notes or "",
-    }
-    script = generate_cold_call_script(lead_dict)
-    opening = script.get("opening", f"Hi {lead.name}, this is {_agent_name()} calling from NaturalWell Health Solutions. I hope I'm not catching you at a bad time?")
+        lead_dict = {
+            "name": name,
+            "company": lead.company if lead else "",
+            "health_interest": lead.health_interest if lead else "",
+            "pain_points": lead.pain_points if lead else "",
+            "notes": lead.notes if lead else "",
+        }
+        script = generate_cold_call_script(lead_dict)
+        opening = script.get("opening", f"Hi {name}, this is {_agent_name()} calling from Vital Health Global. I hope I'm not catching you at a bad time? We help people discover natural health solutions for energy, wellness and vitality. Do you have just 60 seconds?")
 
-    gather_url = f"{_base_url()}/webhooks/voice/gather?lead_id={lead_id}"
-    twiml = build_call_twiml(opening, gather_url)
-    return xml_response(twiml)
+        gather_url = f"{_base_url()}/webhooks/voice/gather?lead_id={lead_id}"
+        twiml = build_call_twiml(opening, gather_url)
+        return xml_response(twiml)
+    except Exception as e:
+        logger.error(f"voice_answer error for lead {lead_id}: {e}")
+        from twilio.twiml.voice_response import VoiceResponse
+        r = VoiceResponse()
+        r.say(f"Hi, this is Alex from Vital Health Global. We offer premium natural health products that can help with energy, wellness and vitality. Please visit getfreeproducts.net to learn more. Have a wonderful day!", voice="Polly.Joanna")
+        r.hangup()
+        return xml_response(str(r))
 
 
 @router.post("/voice/gather")
