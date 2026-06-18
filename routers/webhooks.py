@@ -48,7 +48,7 @@ async def voice_answer(request: Request, lead_id: int, db: Session = Depends(get
         logger.error(f"voice_answer error for lead {lead_id}: {e}")
         from twilio.twiml.voice_response import VoiceResponse
         r = VoiceResponse()
-        r.say(f"Hi, this is Alex from Vital Health Global. We offer premium natural health products that can help with energy, wellness and vitality. Please visit getfreeproducts.net to learn more. Have a wonderful day!", voice="alice")
+        r.say(f"Hi, this is Alex from Vital Health Global. We offer premium natural health products that can help with energy, wellness and vitality. Please visit getfreeproducts.net to learn more. Have a wonderful day!", voice="Polly.Joanna-Neural")
         r.hangup()
         return xml_response(str(r))
 
