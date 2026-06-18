@@ -40,9 +40,6 @@ def make_outbound_call(lead_phone: str, lead_id: int, user=None) -> dict:
             record=True,
             recording_status_callback=f"{settings.BASE_URL}/webhooks/voice/recording?lead_id={lead_id}",
             recording_status_callback_method="POST",
-            machine_detection="Enable",              # detect answering machines
-            async_amd=True,
-            async_amd_status_callback=f"{settings.BASE_URL}/webhooks/voice/amd?lead_id={lead_id}",
         )
         logger.info(f"Call initiated to lead {lead_id}: SID={call.sid}")
         return {"success": True, "call_sid": call.sid, "status": call.status}
