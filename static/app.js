@@ -151,12 +151,13 @@ function filterLeads() { loadLeads(); }
 
 function renderLeadsTable(leads) {
   const tb = document.getElementById('leadsTable');
-  if (!leads.length) { tb.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">No leads found</td></tr>'; return; }
+  if (!leads.length) { tb.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">No leads found</td></tr>'; return; }
   tb.innerHTML = leads.map(l => `
-    <tr onclick="openLeadModal(${l.id})" style="cursor:pointer">
-      <td><div class="fw-semibold">${l.name}</div><div class="text-muted small">${l.company || '—'}</div></td>
-      <td><a href="tel:${l.phone}" onclick="event.stopPropagation()" class="text-decoration-none">${l.phone || '—'}</a></td>
-      <td><a href="mailto:${l.email}" onclick="event.stopPropagation()" class="text-decoration-none">${l.email || '—'}</a></td>
+    <tr>
+      <td onclick="event.stopPropagation()"><input type="checkbox" class="lead-checkbox" value="${l.id}" onchange="updateSelection()"></td>
+      <td onclick="openLeadModal(${l.id})" style="cursor:pointer"><div class="fw-semibold">${l.name}</div><div class="text-muted small">${l.company || '—'}</div></td>
+      <td><a href="tel:${l.phone}" class="text-decoration-none">${l.phone || '—'}</a></td>
+      <td><a href="mailto:${l.email}" class="text-decoration-none">${l.email || '—'}</a></td>
       <td><span class="badge rounded-pill badge-${l.status}">${l.status}</span></td>
       <td>
         <div class="d-flex align-items-center gap-2">
@@ -166,14 +167,110 @@ function renderLeadsTable(leads) {
       </td>
       <td><small class="text-muted">${l.health_interest || '—'}</small></td>
       <td><small class="text-muted">${l.created_at?.substring(0,10) || ''}</small></td>
-      <td onclick="event.stopPropagation()">
+      <td>
         <div class="d-flex gap-1">
           <button class="btn btn-sm btn-outline-success" title="Call" onclick="quickDial(${l.id})"><i class="bi bi-telephone"></i></button>
           <button class="btn btn-sm btn-outline-primary" title="SMS" onclick="quickSMS(${l.id})"><i class="bi bi-chat-text"></i></button>
           <button class="btn btn-sm btn-outline-warning" title="Email" onclick="quickEmail(${l.id})"><i class="bi bi-envelope"></i></button>
+          <button class="btn btn-sm btn-outline-secondary" title="Edit" onclick="editLead(${l.id})"><i class="bi bi-pencil"></i></button>
+          <button class="btn btn-sm btn-outline-danger" title="Delete" onclick="deleteLead(${l.id},'${l.name}')"><i class="bi bi-trash"></i></button>
         </div>
       </td>
     </tr>`).join('');
+}
+
+function toggleSelectAll(cb) {
+  document.querySelectorAll('.lead-checkbox').forEach(c => c.checked = cb.checked);
+  updateSelection();
+}
+
+function updateSelection() {
+  const selected = document.querySelectorAll('.lead-checkbox:checked');
+  const count = selected.length;
+  document.getElementById('selectedCount').style.display = count ? '' : 'none';
+  document.getElementById('selectedCount').textContent = count + ' selected';
+  document.getElementById('callListBtn').style.display = count ? '' : 'none';
+  document.getElementById('deleteSelectedBtn').style.display = count ? '' : 'none';
+}
+
+function getSelectedIds() {
+  return [...document.querySelectorAll('.lead-checkbox:checked')].map(c => parseInt(c.value));
+}
+
+async function deleteLead(id, name) {
+  if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+  try {
+    await apiFetch(`/leads/${id}`, { method: 'DELETE' });
+    showToast(`${name} deleted.`, 'success');
+    loadLeads();
+  } catch (e) { /* handled */ }
+}
+
+async function deleteSelected() {
+  const ids = getSelectedIds();
+  if (!ids.length) return;
+  if (!confirm(`Delete ${ids.length} leads? This cannot be undone.`)) return;
+  let done = 0;
+  for (const id of ids) {
+    try { await apiFetch(`/leads/${id}`, { method: 'DELETE' }); done++; } catch (e) {}
+  }
+  showToast(`${done} leads deleted.`, 'success');
+  loadLeads();
+}
+
+async function editLead(id) {
+  try {
+    const lead = await apiFetch(`/leads/${id}`);
+    document.getElementById('edit-id').value = lead.id;
+    document.getElementById('edit-name').value = lead.name || '';
+    document.getElementById('edit-company').value = lead.company || '';
+    document.getElementById('edit-phone').value = lead.phone || '';
+    document.getElementById('edit-email').value = lead.email || '';
+    document.getElementById('edit-address').value = lead.address || '';
+    document.getElementById('edit-status').value = lead.status || 'new';
+    document.getElementById('edit-interest').value = lead.health_interest || '';
+    document.getElementById('edit-painpoints').value = lead.pain_points || '';
+    document.getElementById('edit-notes').value = lead.notes || '';
+    new bootstrap.Modal(document.getElementById('editLeadModal')).show();
+  } catch (e) { /* handled */ }
+}
+
+async function saveEditLead() {
+  const id = document.getElementById('edit-id').value;
+  const data = {
+    name: document.getElementById('edit-name').value.trim(),
+    company: document.getElementById('edit-company').value.trim(),
+    phone: document.getElementById('edit-phone').value.trim(),
+    email: document.getElementById('edit-email').value.trim(),
+    address: document.getElementById('edit-address').value.trim(),
+    status: document.getElementById('edit-status').value,
+    health_interest: document.getElementById('edit-interest').value.trim(),
+    pain_points: document.getElementById('edit-painpoints').value.trim(),
+    notes: document.getElementById('edit-notes').value.trim(),
+  };
+  try {
+    await apiFetch(`/leads/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+    bootstrap.Modal.getInstance(document.getElementById('editLeadModal')).hide();
+    showToast('Lead updated!', 'success');
+    loadLeads();
+  } catch (e) { /* handled */ }
+}
+
+async function startCallList() {
+  const ids = getSelectedIds();
+  if (!ids.length) return;
+  if (!confirm(`Start calling ${ids.length} leads one by one? Each call will be placed with a 5-second delay.`)) return;
+  let called = 0, failed = 0;
+  for (const id of ids) {
+    try {
+      await apiFetch(`/calls/dial/${id}`, { method: 'POST' });
+      called++;
+      showToast(`Call ${called}/${ids.length} initiated...`, 'success');
+    } catch (e) { failed++; }
+    if (id !== ids[ids.length - 1]) await new Promise(r => setTimeout(r, 5000));
+  }
+  showToast(`Call list complete: ${called} initiated, ${failed} failed.`, called > 0 ? 'success' : 'danger');
+  loadLeads();
 }
 
 async function openLeadModal(leadId) {
@@ -204,6 +301,8 @@ async function openLeadModal(leadId) {
           <button class="btn btn-primary btn-sm" onclick="quickSMS(${lead.id})"><i class="bi bi-chat-text me-1"></i>Send SMS</button>
           <button class="btn btn-warning btn-sm" onclick="quickEmail(${lead.id})"><i class="bi bi-envelope me-1"></i>Send Email</button>
           <button class="btn btn-outline-secondary btn-sm" onclick="rescoreLead(${lead.id})"><i class="bi bi-stars me-1"></i>Re-score Lead</button>
+          <button class="btn btn-outline-secondary btn-sm" onclick="bootstrap.Modal.getInstance(document.getElementById('leadModal')).hide();editLead(${lead.id})"><i class="bi bi-pencil me-1"></i>Edit Lead</button>
+          <button class="btn btn-outline-danger btn-sm" onclick="bootstrap.Modal.getInstance(document.getElementById('leadModal')).hide();deleteLead(${lead.id},'${lead.name}')"><i class="bi bi-trash me-1"></i>Delete Lead</button>
         </div>
       </div>
       <div class="col-md-4">

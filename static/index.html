@@ -125,9 +125,14 @@ body { background: #f0f4f1; font-family: 'Segoe UI', sans-serif; }
   <!-- ══════════════ LEADS PAGE ══════════════ -->
   <div id="page-leads" class="page">
     <div class="card">
-      <div class="card-header d-flex justify-content-between align-items-center">
-        <span>All Leads</span>
-        <div class="d-flex gap-2">
+      <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+          <span>All Leads</span>
+          <span id="selectedCount" class="badge bg-primary" style="display:none">0 selected</span>
+          <button id="callListBtn" class="btn btn-sm btn-success" style="display:none" onclick="startCallList()"><i class="bi bi-telephone-fill me-1"></i>Call All Selected</button>
+          <button id="deleteSelectedBtn" class="btn btn-sm btn-danger" style="display:none" onclick="deleteSelected()"><i class="bi bi-trash me-1"></i>Delete Selected</button>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
           <input class="form-control form-control-sm" style="width:200px" placeholder="Search..." id="leadSearch" oninput="filterLeads()">
           <select class="form-select form-select-sm" style="width:140px" id="statusFilter" onchange="filterLeads()">
             <option value="">All Statuses</option>
@@ -142,11 +147,47 @@ body { background: #f0f4f1; font-family: 'Segoe UI', sans-serif; }
         <div class="table-responsive">
           <table class="table table-hover mb-0">
             <thead><tr>
+              <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"></th>
               <th>Name / Company</th><th>Phone</th><th>Email</th><th>Status</th>
               <th>Score</th><th>Health Interest</th><th>Added</th><th>Actions</th>
             </tr></thead>
-            <tbody id="leadsTable"><tr><td colspan="8" class="text-center py-4 text-muted">Loading leads...</td></tr></tbody>
+            <tbody id="leadsTable"><tr><td colspan="9" class="text-center py-4 text-muted">Loading leads...</td></tr></tbody>
           </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Lead Modal -->
+  <div class="modal fade" id="editLeadModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Lead</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="edit-id">
+          <div class="row g-3">
+            <div class="col-6"><label class="form-label">Name*</label><input class="form-control" id="edit-name"></div>
+            <div class="col-6"><label class="form-label">Company</label><input class="form-control" id="edit-company"></div>
+            <div class="col-6"><label class="form-label">Phone</label><input class="form-control" id="edit-phone" placeholder="+1234567890"></div>
+            <div class="col-6"><label class="form-label">Email</label><input class="form-control" id="edit-email"></div>
+            <div class="col-12"><label class="form-label">Address</label><input class="form-control" id="edit-address"></div>
+            <div class="col-6"><label class="form-label">Status</label>
+              <select class="form-select" id="edit-status">
+                <option>new</option><option>contacted</option><option>interested</option>
+                <option>qualified</option><option>proposal</option><option>won</option><option>lost</option>
+              </select>
+            </div>
+            <div class="col-6"><label class="form-label">Health Interest</label><input class="form-control" id="edit-interest"></div>
+            <div class="col-12"><label class="form-label">Pain Points</label><textarea class="form-control" id="edit-painpoints" rows="2"></textarea></div>
+            <div class="col-12"><label class="form-label">Notes</label><textarea class="form-control" id="edit-notes" rows="2"></textarea></div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button class="btn btn-green" onclick="saveEditLead()">Save Changes</button>
         </div>
       </div>
     </div>
