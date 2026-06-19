@@ -202,7 +202,16 @@ Rules:
 
 Return ONLY the SMS text, nothing else."""
 
-    return _call_claude([{"role": "user", "content": prompt}], max_tokens=200, user=user).strip()
+    try:
+        return _call_claude([{"role": "user", "content": prompt}], max_tokens=200, user=user).strip()
+    except Exception:
+        name = lead.get('name', 'there')
+        return (
+            f"Hi {name}, this is Alex from Vital Health Global! "
+            f"Just checking in on your wellness journey. "
+            f"Visit getfreeproducts.net to explore our natural health products. "
+            f"Reply STOP to unsubscribe."
+        )[:160]
 
 
 def generate_email(lead: dict, interaction_history: list, email_type: str = "first_followup", user=None) -> dict:
@@ -239,8 +248,23 @@ Return JSON:
   "body": "Full email body. Use \\n for line breaks. Sign off as {settings.AGENT_NAME} from {settings.COMPANY_NAME}. Include one clear call-to-action."
 }}"""
 
-    text = _call_claude([{"role": "user", "content": prompt}], max_tokens=800, user=user)
-    return _extract_json(text)
+    try:
+        text = _call_claude([{"role": "user", "content": prompt}], max_tokens=800, user=user)
+        return _extract_json(text)
+    except Exception:
+        name = lead.get('name', 'there')
+        return {
+            "subject": f"Your Natural Health Journey Starts Here, {name}",
+            "preview_text": "Discover premium natural health products from Vital Health Global",
+            "body": (
+                f"Hi {name},\n\n"
+                f"Thank you for your time! I wanted to follow up and share more about how Vital Health Global can support your wellness goals.\n\n"
+                f"We offer premium natural supplements for energy, anti-aging, detox, and daily nutrition — all backed by science.\n\n"
+                f"Visit us at getfreeproducts.net to explore our full range of products.\n\n"
+                f"I'd love to help you find the right solution for your health goals. Feel free to reply to this email with any questions.\n\n"
+                f"To your health,\n{settings.AGENT_NAME}\n{settings.COMPANY_NAME}"
+            ),
+        }
 
 
 # ── Analysis & Intelligence ───────────────────────────────────────────────────
