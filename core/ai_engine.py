@@ -374,5 +374,24 @@ Return JSON:
   ]
 }}"""
 
-    text = _call_claude([{"role": "user", "content": prompt}], max_tokens=2000)
-    return _extract_json(text)
+    try:
+        text = _call_claude([{"role": "user", "content": prompt}], max_tokens=2000, user=user)
+        return _extract_json(text)
+    except Exception:
+        name = campaign.get('name', 'Campaign')
+        focus = campaign.get('product_focus', 'natural health products')
+        audience = campaign.get('target_audience', 'health-conscious individuals')
+        return {
+            "call_script_template": f"Hi [LEAD_NAME], this is {settings.AGENT_NAME} from {settings.COMPANY_NAME}. I'm reaching out because we help {audience} with {focus}. Do you have 60 seconds to hear how we can help you? Visit {settings.SHOP_URL} to learn more.",
+            "sms_template": f"Hi [NAME], {settings.AGENT_NAME} from {settings.COMPANY_NAME} here! We have amazing {focus} that could help you. Reply YES to learn more or STOP to unsubscribe.",
+            "email_subject": f"Discover {focus} — {settings.COMPANY_NAME}",
+            "email_body": f"Hi [NAME],\n\nI hope this finds you well! I'm reaching out from {settings.COMPANY_NAME} because we specialize in {focus} for {audience}.\n\nI'd love to share how our products can support your health goals.\n\nVisit us at {settings.SHOP_URL}\n\nTo your health,\n{settings.AGENT_NAME}\n{settings.COMPANY_NAME}",
+            "followup_sequence": [
+                {"day": 1, "type": "call", "notes": "Initial cold call"},
+                {"day": 3, "type": "sms", "notes": "Check-in SMS"},
+                {"day": 7, "type": "email", "notes": "Value-add email"},
+                {"day": 14, "type": "call", "notes": "Second call attempt"},
+                {"day": 21, "type": "email", "notes": "Special offer"},
+                {"day": 30, "type": "sms", "notes": "Final check-in"},
+            ],
+        }
