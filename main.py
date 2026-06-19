@@ -75,3 +75,32 @@ def pricing():
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "SalesAI Pro", "version": "2.0.0"}
+
+
+@app.get("/unsubscribe/{lead_id}", include_in_schema=False)
+def unsubscribe(lead_id: int):
+    from database import SessionLocal
+    from models import Lead
+    from fastapi.responses import HTMLResponse
+    db = SessionLocal()
+    try:
+        lead = db.query(Lead).filter(Lead.id == lead_id).first()
+        if lead:
+            lead.do_not_contact = True
+            lead.status = "lost"
+            db.commit()
+            name = lead.name
+        else:
+            name = "there"
+    finally:
+        db.close()
+    return HTMLResponse(f"""<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <title>Unsubscribed</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    </head><body class="bg-light d-flex align-items-center justify-content-center" style="min-height:100vh">
+    <div class="text-center p-5">
+    <h2 class="text-success">&#10003; Unsubscribed</h2>
+    <p class="text-muted">Hi {name}, you have been removed from our mailing list.<br>
+    You will no longer receive emails or calls from Vital Health Global.</p>
+    <a href="/" class="btn btn-outline-secondary mt-3">Go to Homepage</a>
+    </div></body></html>""")

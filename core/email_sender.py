@@ -7,14 +7,18 @@ from config import settings
 logger = logging.getLogger(__name__)
 
 
-def send_email(to_email: str, to_name: str, subject: str, body: str) -> dict:
+def send_email(to_email: str, to_name: str, subject: str, body: str, lead_id: int = None) -> dict:
     """Send a plain-text / light-HTML email via SendGrid."""
     if not settings.SENDGRID_API_KEY:
         logger.warning("SendGrid API key not configured — email skipped")
         return {"success": False, "error": "SendGrid not configured"}
 
-    # Convert \n to <br> for basic HTML rendering
-    html_body = body.replace("\n", "<br>")
+    unsubscribe_url = f"{settings.BASE_URL}/unsubscribe/{lead_id}" if lead_id else f"{settings.BASE_URL}/unsubscribe/0"
+    unsubscribe_line = f"\n\n---\nTo unsubscribe from future emails, click here: {unsubscribe_url}"
+    full_body = body + unsubscribe_line
+
+    html_body = full_body.replace("\n", "<br>")
+    html_body += f'<br><br><hr><small><a href="{unsubscribe_url}" style="color:#999">Unsubscribe</a></small>'
 
     message = Mail(
         from_email=Email(settings.FROM_EMAIL, settings.FROM_NAME),
@@ -22,7 +26,7 @@ def send_email(to_email: str, to_name: str, subject: str, body: str) -> dict:
         subject=subject,
     )
     message.content = [
-        Content("text/plain", body),
+        Content("text/plain", full_body),
         Content("text/html", f"<html><body>{html_body}</body></html>"),
     ]
 
