@@ -26,6 +26,7 @@ async function initAuth() {
     // Update sidebar
     document.getElementById('planBadge').textContent = currentUser.plan.toUpperCase() + ' PLAN';
     document.getElementById('userEmail').textContent = currentUser.email;
+    maybeShowGuide();
     return true;
   } catch(e) { logout(); return false; }
 }
@@ -55,6 +56,16 @@ function showPage(name) {
 }
 
 function loadAll() { showPage(document.getElementById('pageTitle').textContent.toLowerCase().replace(' ', '')); }
+
+function showHelp() {
+  new bootstrap.Modal(document.getElementById('welcomeModal')).show();
+}
+
+function maybeShowGuide() {
+  if (!localStorage.getItem('guideShown')) {
+    setTimeout(() => new bootstrap.Modal(document.getElementById('welcomeModal')).show(), 800);
+  }
+}
 
 // ── API Helpers ─────────────────────────────────────────────────────────────
 

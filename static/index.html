@@ -92,7 +92,91 @@ body { background: #f0f4f1; font-family: 'Segoe UI', sans-serif; }
     <div id="pageTitle" class="fw-bold fs-5">Dashboard</div>
     <div class="d-flex gap-2">
       <button class="btn btn-sm btn-green" onclick="showPage('scraper')"><i class="bi bi-plus-lg me-1"></i>Find Leads</button>
+      <button class="btn btn-sm btn-outline-info" onclick="showHelp()"><i class="bi bi-question-circle me-1"></i>Help</button>
       <button class="btn btn-sm btn-outline-secondary" onclick="loadAll()"><i class="bi bi-arrow-clockwise"></i></button>
+    </div>
+  </div>
+
+  <!-- ══════════════ WELCOME / GETTING STARTED MODAL ══════════════ -->
+  <div class="modal fade" id="welcomeModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header" style="background:var(--green-dark);color:#fff;border-radius:12px 12px 0 0">
+          <h4 class="modal-title"><i class="bi bi-leaf-fill me-2"></i>Welcome to Vital Health Global Sales AI</h4>
+        </div>
+        <div class="modal-body p-4">
+          <p class="text-muted mb-4">Follow these 5 steps to get your first AI-powered sales call running in minutes.</p>
+          <div class="row g-3">
+
+            <div class="col-12">
+              <div class="d-flex align-items-start p-3 rounded" style="background:#f0f9f4;border-left:4px solid var(--green)">
+                <div class="me-3 text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:36px;height:36px;min-width:36px;background:var(--green);font-size:1.1rem">1</div>
+                <div>
+                  <div class="fw-bold">Find or Add Leads</div>
+                  <div class="text-muted small">Go to <strong>Lead Finder</strong> in the sidebar to scrape businesses from Google Maps, or click <strong>Leads → Add Lead</strong> to add one manually. Enter their name, phone number (with country code e.g. +18001234567), and email.</div>
+                  <button class="btn btn-sm btn-green mt-2" onclick="bootstrap.Modal.getInstance(document.getElementById('welcomeModal')).hide();showPage('scraper')">Go to Lead Finder →</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="d-flex align-items-start p-3 rounded" style="background:#f0f9f4;border-left:4px solid var(--green)">
+                <div class="me-3 text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:36px;height:36px;min-width:36px;background:var(--green);font-size:1.1rem">2</div>
+                <div>
+                  <div class="fw-bold">Create a Campaign</div>
+                  <div class="text-muted small">Go to <strong>Campaigns</strong> and click <strong>New Campaign</strong>. Give it a name (e.g. "Gym Owners — Energy Products"), choose your product focus and target audience. The AI will auto-generate your call script, SMS, and email templates.</div>
+                  <button class="btn btn-sm btn-green mt-2" onclick="bootstrap.Modal.getInstance(document.getElementById('welcomeModal')).hide();showPage('campaigns')">Go to Campaigns →</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="d-flex align-items-start p-3 rounded" style="background:#f0f9f4;border-left:4px solid var(--green)">
+                <div class="me-3 text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:36px;height:36px;min-width:36px;background:var(--green);font-size:1.1rem">3</div>
+                <div>
+                  <div class="fw-bold">Make Your First AI Call</div>
+                  <div class="text-muted small">Go to <strong>Leads</strong>, find your lead, and click the green <i class="bi bi-telephone"></i> button. The AI will call them using a realistic voice, introduce your products, and handle their responses automatically. You'll see the result in the lead's interaction history.</div>
+                  <button class="btn btn-sm btn-green mt-2" onclick="bootstrap.Modal.getInstance(document.getElementById('welcomeModal')).hide();showPage('leads')">Go to Leads →</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="d-flex align-items-start p-3 rounded" style="background:#f0f9f4;border-left:4px solid var(--green)">
+                <div class="me-3 text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:36px;height:36px;min-width:36px;background:var(--green);font-size:1.1rem">4</div>
+                <div>
+                  <div class="fw-bold">Automated Follow-Ups Run on Their Own</div>
+                  <div class="text-muted small">Once a lead is added, the system automatically schedules follow-ups: <strong>Day 0</strong> call → <strong>Day 2</strong> SMS → <strong>Day 5</strong> email → <strong>Day 10</strong> call → <strong>Day 22</strong> email → <strong>Day 30</strong> final call. You don't need to do anything — it runs 24/7.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="d-flex align-items-start p-3 rounded" style="background:#f0f9f4;border-left:4px solid var(--green)">
+                <div class="me-3 text-white rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:36px;height:36px;min-width:36px;background:var(--green);font-size:1.1rem">5</div>
+                <div>
+                  <div class="fw-bold">Monitor Your Pipeline</div>
+                  <div class="text-muted small">Check the <strong>Dashboard</strong> daily to see how many leads are interested, how many calls went out, and your conversion rate. Use the <strong>Pipeline</strong> view to see leads organized by stage from New → Won.</div>
+                  <button class="btn btn-sm btn-green mt-2" onclick="bootstrap.Modal.getInstance(document.getElementById('welcomeModal')).hide();showPage('pipeline')">Go to Pipeline →</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="alert alert-info mt-4 mb-0">
+            <i class="bi bi-lightbulb-fill me-2"></i>
+            <strong>Pro Tips:</strong> Always enter phone numbers with country code (+1 for USA/Trinidad). Use <strong>Call All Selected</strong> to dial multiple leads at once. Leads who reply STOP to SMS or click Unsubscribe in email are automatically removed from all future contact.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div class="form-check me-auto">
+            <input class="form-check-input" type="checkbox" id="dontShowAgain" onchange="if(this.checked)localStorage.setItem('guideShown','1');else localStorage.removeItem('guideShown')">
+            <label class="form-check-label text-muted small" for="dontShowAgain">Don't show this again</label>
+          </div>
+          <button class="btn btn-green px-4" onclick="bootstrap.Modal.getInstance(document.getElementById('welcomeModal')).hide()">Get Started</button>
+        </div>
+      </div>
     </div>
   </div>
 
