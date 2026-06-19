@@ -4,10 +4,38 @@ Uses the new Places API (Text Search) via direct HTTP — no legacy API needed.
 Falls back to Yellow Pages web scraping if no API key is configured.
 """
 import logging
+import re
 import time
 import requests
 from typing import List, Dict
 from config import settings
+
+_EMAIL_RE = re.compile(r"[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}")
+_SKIP_DOMAINS = {"sentry.io", "wix.com", "example.com", "google.com", "schema.org",
+                 "wordpress.com", "cloudflare.com", "w3.org", "mozilla.org"}
+
+
+def _extract_email_from_website(url: str) -> str:
+    """Visit a business website and extract the first contact email found."""
+    if not url:
+        return ""
+    try:
+        headers = {"User-Agent": "Mozilla/5.0 (compatible; SalesBot/1.0)"}
+        pages = [url, url.rstrip("/") + "/contact", url.rstrip("/") + "/about"]
+        for page in pages:
+            try:
+                r = requests.get(page, headers=headers, timeout=6, allow_redirects=True)
+                if r.ok:
+                    emails = _EMAIL_RE.findall(r.text)
+                    for email in emails:
+                        domain = email.split("@")[-1].lower()
+                        if domain not in _SKIP_DOMAINS and not email.endswith(".png") and not email.endswith(".jpg"):
+                            return email.lower()
+            except Exception:
+                continue
+    except Exception:
+        pass
+    return ""
 
 logger = logging.getLogger(__name__)
 
@@ -75,23 +103,27 @@ def _scrape_new_api(query: str, location: str, max_results: int) -> List[Dict]:
                 name = place.get("displayName", {}).get("text", "")
                 if not name:
                     continue
+                website = place.get("websiteUri", "")
+                email = _extract_email_from_website(website)
                 lead = {
                     "name": name,
                     "phone": place.get("nationalPhoneNumber", ""),
-                    "email": "",
+                    "email": email,
                     "company": name,
                     "address": place.get("formattedAddress", ""),
+                    "website": website,
                     "source": "google_maps",
                     "notes": (
                         f"Google Maps: '{query}' in {location}. "
                         f"Rating: {place.get('rating', 'N/A')}. "
-                        f"Website: {place.get('websiteUri', 'N/A')}"
+                        f"Website: {website or 'N/A'}"
                     ),
                     "health_interest": _infer_health_interest(
                         place.get("types", []), name
                     ),
                 }
                 leads.append(lead)
+                time.sleep(0.5)  # polite delay between website visits
 
             next_page_token = data.get("nextPageToken")
             if not next_page_token or len(leads) >= max_results:
