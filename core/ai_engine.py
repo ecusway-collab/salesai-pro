@@ -174,7 +174,7 @@ Return a JSON object with these exact fields:
             "value_proposition": "Vital Health Global offers premium natural health products backed by science. From energy boosters to anti-aging solutions, we have products that fit every lifestyle and health goal.",
             "objection_handlers": {"too expensive": "I understand — we also have starter bundles and an affiliate program where you can earn while you shop.", "not interested": "No problem at all! Can I send you some information to review at your own pace?"},
             "call_to_action": "I'd love to send you our product guide. What's the best email for you?",
-            "voicemail_script": f"Hi {name}, this is Alex from Vital Health Global. I'm calling to share some exciting natural health solutions that may be perfect for you. Please call me back or visit getfreeproducts.net. Have a great day!",
+            "voicemail_script": f"Hi {name}, this is Alex from Vital Health Global. I'm calling to share some exciting natural health solutions that may be perfect for you. Please call me back or visit {settings.SHOP_URL}. Have a great day!",
         }
 
 
@@ -209,7 +209,7 @@ Return ONLY the SMS text, nothing else."""
         return (
             f"Hi {name}, this is Alex from Vital Health Global! "
             f"Just checking in on your wellness journey. "
-            f"Visit getfreeproducts.net to explore our natural health products. "
+            f"Visit {settings.SHOP_URL} to explore our natural health products. "
             f"Reply STOP to unsubscribe."
         )[:160]
 
@@ -260,7 +260,7 @@ Return JSON:
                 f"Hi {name},\n\n"
                 f"Thank you for your time! I wanted to follow up and share more about how Vital Health Global can support your wellness goals.\n\n"
                 f"We offer premium natural supplements for energy, anti-aging, detox, and daily nutrition — all backed by science.\n\n"
-                f"Visit us at getfreeproducts.net to explore our full range of products.\n\n"
+                f"Visit us at {settings.SHOP_URL} to explore our full range of products.\n\n"
                 f"I'd love to help you find the right solution for your health goals. Feel free to reply to this email with any questions.\n\n"
                 f"To your health,\n{settings.AGENT_NAME}\n{settings.COMPANY_NAME}"
             ),
