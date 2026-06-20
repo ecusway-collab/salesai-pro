@@ -54,7 +54,7 @@ async def voice_answer(request: Request, lead_id: int, db: Session = Depends(get
         from twilio.twiml.voice_response import VoiceResponse
         r = VoiceResponse()
         from config import settings as _cfg
-        r.say(f"Hi, this is {_agent_name()} from {_company_name()}. Please visit {_cfg.SHOP_URL} to learn more about our products. Have a wonderful day!", voice="Polly.Joanna-Neural")
+        r.say(f"Hi, this is {_agent_name()} from {_company_name()}. Please visit {_cfg.SHOP_URL} to learn more about our products. Have a wonderful day!", voice="Google.en-US-Neural2-F")
         r.hangup()
         return xml_response(str(r))
 
@@ -341,7 +341,7 @@ async def call_audio(lead_id: int, db: Session = Depends(get_db)):
         # Fall back to Polly TwiML so the call doesn't fail
         from twilio.twiml.voice_response import VoiceResponse as VR
         r = VR()
-        r.say(text, voice="Polly.Joanna-Neural", language="en-US")
+        r.say(text, voice="Google.en-US-Neural2-F", language="en-US")
         return Response(content=str(r), media_type="application/xml")
 
     return FastResponse(content=audio, media_type="audio/mpeg")

@@ -64,11 +64,11 @@ def build_call_twiml(opening: str, gather_action_url: str) -> str:
         timeout=8,
         num_digits=1,
     )
-    gather.say(opening, voice="Polly.Joanna-Neural", language="en-US")
+    gather.say(opening, voice="Google.en-US-Neural2-F", language="en-US")
     gather.say(
         "Press 1 to learn more, press 2 to be removed from our list, "
         "or just speak your response.",
-        voice="Polly.Joanna-Neural",
+        voice="Google.en-US-Neural2-F",
     )
     response.append(gather)
 
@@ -76,7 +76,7 @@ def build_call_twiml(opening: str, gather_action_url: str) -> str:
     response.say(
         "I didn't catch that — no problem at all! I'll follow up another time. "
         "Have a wonderful and healthy day!",
-        voice="Polly.Joanna-Neural",
+        voice="Google.en-US-Neural2-F",
     )
     response.hangup()
     return str(response)
@@ -98,14 +98,14 @@ def build_call_twiml_elevenlabs(opening: str, gather_action_url: str, audio_url:
     gather.say(
         "Press 1 to learn more, press 2 to be removed from our list, "
         "or just speak your response.",
-        voice="Polly.Joanna-Neural",
+        voice="Google.en-US-Neural2-F",
     )
     response.append(gather)
 
     response.say(
         "I didn't catch that — no problem at all! I'll follow up another time. "
         "Have a wonderful and healthy day!",
-        voice="Polly.Joanna-Neural",
+        voice="Google.en-US-Neural2-F",
     )
     response.hangup()
     return str(response)
@@ -114,7 +114,7 @@ def build_call_twiml_elevenlabs(opening: str, gather_action_url: str, audio_url:
 def build_voicemail_twiml(voicemail_script: str) -> str:
     """TwiML for leaving a voicemail on an answering machine."""
     response = VoiceResponse()
-    response.say(voicemail_script, voice="Polly.Joanna-Neural", language="en-US")
+    response.say(voicemail_script, voice="Google.en-US-Neural2-F", language="en-US")
     response.hangup()
     return str(response)
 
@@ -130,10 +130,10 @@ def build_response_twiml(message: str, gather_url: str = None) -> str:
             speech_timeout="3",
             timeout=8,
         )
-        gather.say(message, voice="Polly.Joanna-Neural")
+        gather.say(message, voice="Google.en-US-Neural2-F")
         response.append(gather)
     else:
-        response.say(message, voice="Polly.Joanna-Neural")
+        response.say(message, voice="Google.en-US-Neural2-F")
         response.hangup()
     return str(response)
 

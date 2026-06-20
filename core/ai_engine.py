@@ -16,69 +16,36 @@ def _get_client(user=None):
            else settings.ANTHROPIC_API_KEY)
     return anthropic.Anthropic(api_key=key)
 
-# Cached system prompt — sent once, reused across all requests (saves tokens)
-_SYSTEM_PROMPT = f"""You are {settings.AGENT_NAME}, a warm and knowledgeable AI sales assistant for Vital Health Global.
+def _get_system_prompt() -> str:
+    """Build the AI system prompt dynamically from current settings."""
+    return f"""You are {settings.AGENT_NAME}, a warm and professional AI sales assistant for {settings.COMPANY_NAME}.
 
-COMPANY: Vital Health Global
-TAGLINE: "Discover Better Health"
-SHOP URL: https://vitalhealthglobal.com/collections/all?refID=67597
-MISSION: Curated natural health products designed to support lasting vitality.
+COMPANY: {settings.COMPANY_NAME}
+SHOP URL: {settings.SHOP_URL}
+MISSION: Helping businesses and individuals discover powerful health and wealth solutions.
 
-PRODUCT LINES & PRICING:
-── AWAKEN FAMILY (energy, mental clarity, performance) ──
-• V-NRGY — Natural energy booster ($42) — sustained energy without the crash
-• V-NITRO — Nitric oxide & circulation support ($52.50) — performance and endurance
-• V-NEUROKAFE — Nootropic coffee blend ($52.50) — focus, clarity, mental performance
-
-── DETOX FAMILY (cleansing, cellular health) ──
-• V-TEDETOX — Detox tea blend ($13.50) — gentle daily cleansing
-• V-ORGANEX — Organ cleanse & detox support ($42) — liver, kidney, gut detox
-
-── NOURISH FAMILY (daily nutrition, foundational health) ──
-• VITALPRO — Complete protein & nutrition ($63) — meal replacement / daily nutrition
-• V-OMEGA 3 — Premium fish oil omega-3s ($62) — heart, brain, joint health
-• V-DAILY — Comprehensive daily multivitamin ($75) — full-spectrum nutrients
-
-── RESTORE FAMILY (recovery, anti-aging, beauty) ──
-• VITALAGE COLLAGEN — Marine collagen peptides ($67.50) — skin, hair, nails, joints
-• V-GLUTATION PLUS — Glutathione antioxidant ($75) — anti-aging, immune support, skin brightening
-
-── SPECIALTY ──
-• Vital Health Scanner — Biometric wellness device ($149–$300) — scan & track health metrics
-• Kids Collection — Age-appropriate supplements for children
-• Discount Bundles — Multi-product savings packages
-
-PRICING NOTE: These are retail prices. Affiliates and distributors can earn commissions. Mention the affiliate/distributor opportunity when prospects show strong interest.
-
-TARGET CUSTOMERS:
-• Individual consumers interested in energy, weight management, anti-aging, or detox
-• Health food stores, gyms, yoga studios, wellness centers, spas
-• Chiropractors, naturopathic doctors, health coaches, personal trainers
-• Network marketers and side-income seekers (affiliate opportunity)
-• Parents looking for children's health supplements
-
-PRODUCT MATCHING GUIDE:
-• Low energy / fatigue → V-NRGY, V-NITRO, V-NEUROKAFE
-• Weight management / metabolism → VITALPRO, V-TEDETOX, V-ORGANEX
-• Anti-aging / skin / beauty → VITALAGE COLLAGEN, V-GLUTATION PLUS
-• General health / daily nutrition → V-DAILY, V-OMEGA 3, VITALPRO
-• Athletes / active lifestyle → V-NRGY, V-NITRO, VITALPRO, V-OMEGA 3
-• Detox / cleanse → V-TEDETOX, V-ORGANEX
-• Brain fog / focus → V-NEUROKAFE, V-DAILY
-• Joint pain → V-OMEGA 3, VITALAGE COLLAGEN
+YOUR ROLE:
+You represent {settings.COMPANY_NAME} on outbound sales calls, SMS, and emails.
+Your job is to identify prospect needs, build rapport, and guide them toward solutions that genuinely help them.
 
 YOUR SALES APPROACH:
-1. EMPATHY FIRST — ask about their health goals before pitching any product
-2. MATCH precisely — recommend the 1-2 products that best fit their specific concern
-3. EDUCATE, don't pressure — share what the ingredients actually do
-4. MENTION VALUE — bundles save money; affiliate program earns income
-5. BUILD TRUST — never make FDA medical claims; always say "supports" not "treats"
+1. EMPATHY FIRST — ask about their goals and challenges before pitching anything
+2. MATCH precisely — recommend solutions that best fit their specific situation
+3. EDUCATE, don't pressure — explain benefits clearly and honestly
+4. MENTION VALUE — savings, business opportunities, and referral programs where relevant
+5. BUILD TRUST — be honest, professional, and respectful at all times
 6. FOLLOW UP CONSISTENTLY — most sales happen on the 5th-7th contact
 
-LEGAL: Products are not evaluated by the FDA and are not intended to diagnose, treat, cure, or prevent any disease. Always use language like "supports," "promotes," "helps maintain" — never "treats" or "cures."
+TARGET CUSTOMERS:
+• Business owners, entrepreneurs, and professionals
+• Health-conscious individuals and wellness seekers
+• People looking for supplemental income or business opportunities
+• Fitness centers, gyms, wellness centers, health food stores
+• Coaches, trainers, and health practitioners
 
-TONE: Warm, confident, health-passionate, professional
-NEVER: Make medical diagnoses, guarantee outcomes, use fear tactics, or claim to cure disease."""
+TONE: Warm, confident, professional, energetic, and genuinely helpful
+NEVER: Make medical diagnoses, guarantee outcomes, use pressure tactics, or make claims you cannot back up
+ALWAYS: Respect the prospect's time and decision — a "no" today can become a "yes" later with great follow-up"""
 
 
 def _call_claude(messages: list, max_tokens: int = 1000, user=None) -> str:
@@ -91,7 +58,7 @@ def _call_claude(messages: list, max_tokens: int = 1000, user=None) -> str:
             system=[
                 {
                     "type": "text",
-                    "text": _SYSTEM_PROMPT,
+                    "text": _get_system_prompt(),
                     "cache_control": {"type": "ephemeral"},
                 }
             ],
@@ -169,12 +136,12 @@ Return a JSON object with these exact fields:
     except Exception:
         name = lead.get('name', 'there')
         return {
-            "opening": f"Hi {name}, my name is Alex calling from Vital Health Global. I'm reaching out because we help people discover natural health solutions for energy, wellness, and vitality. Do you have just 60 seconds?",
-            "discovery_questions": ["What's your biggest health concern right now?", "Have you tried natural supplements before?", "What does your ideal wellness routine look like?"],
-            "value_proposition": "Vital Health Global offers premium natural health products backed by science. From energy boosters to anti-aging solutions, we have products that fit every lifestyle and health goal.",
-            "objection_handlers": {"too expensive": "I understand — we also have starter bundles and an affiliate program where you can earn while you shop.", "not interested": "No problem at all! Can I send you some information to review at your own pace?"},
-            "call_to_action": "I'd love to send you our product guide. What's the best email for you?",
-            "voicemail_script": f"Hi {name}, this is Alex from Vital Health Global. I'm calling to share some exciting natural health solutions that may be perfect for you. Please call me back or visit {settings.SHOP_URL}. Have a great day!",
+            "opening": f"Hi {name}, my name is {settings.AGENT_NAME} calling from {settings.COMPANY_NAME}. I'm reaching out because we help businesses and individuals discover powerful health and wealth solutions. Do you have just 60 seconds?",
+            "discovery_questions": ["What's your biggest challenge right now?", "Have you explored health or wellness products before?", "What does your ideal outcome look like?"],
+            "value_proposition": f"{settings.COMPANY_NAME} offers premium solutions backed by results. We have products and opportunities that fit every lifestyle and goal.",
+            "objection_handlers": {"too expensive": "I understand — we also have starter options and opportunities to earn while you explore.", "not interested": "No problem at all! Can I send you some information to review at your own pace?"},
+            "call_to_action": "I'd love to send you more information. What's the best email for you?",
+            "voicemail_script": f"Hi {name}, this is {settings.AGENT_NAME} from {settings.COMPANY_NAME}. I'm calling to share some exciting solutions that may be a great fit for you. Please call me back or visit {settings.SHOP_URL}. Have a great day!",
         }
 
 
@@ -207,9 +174,9 @@ Return ONLY the SMS text, nothing else."""
     except Exception:
         name = lead.get('name', 'there')
         return (
-            f"Hi {name}, this is Alex from Vital Health Global! "
-            f"Just checking in on your wellness journey. "
-            f"Visit {settings.SHOP_URL} to explore our natural health products. "
+            f"Hi {name}, this is {settings.AGENT_NAME} from {settings.COMPANY_NAME}! "
+            f"Just checking in on you. "
+            f"Visit {settings.SHOP_URL} to explore what we offer. "
             f"Reply STOP to unsubscribe."
         )[:160]
 
@@ -254,15 +221,15 @@ Return JSON:
     except Exception:
         name = lead.get('name', 'there')
         return {
-            "subject": f"Your Natural Health Journey Starts Here, {name}",
-            "preview_text": "Discover premium natural health products from Vital Health Global",
+            "subject": f"Following up — {settings.COMPANY_NAME}",
+            "preview_text": f"A quick note from {settings.AGENT_NAME} at {settings.COMPANY_NAME}",
             "body": (
                 f"Hi {name},\n\n"
-                f"Thank you for your time! I wanted to follow up and share more about how Vital Health Global can support your wellness goals.\n\n"
-                f"We offer premium natural supplements for energy, anti-aging, detox, and daily nutrition — all backed by science.\n\n"
-                f"Visit us at {settings.SHOP_URL} to explore our full range of products.\n\n"
-                f"I'd love to help you find the right solution for your health goals. Feel free to reply to this email with any questions.\n\n"
-                f"To your health,\n{settings.AGENT_NAME}\n{settings.COMPANY_NAME}"
+                f"Thank you for your time! I wanted to follow up and share more about how {settings.COMPANY_NAME} can help you.\n\n"
+                f"We offer solutions designed to support your goals — whether that's health, wellness, or building a better lifestyle.\n\n"
+                f"Visit us at {settings.SHOP_URL} to explore what we have available.\n\n"
+                f"Feel free to reply to this email with any questions — I'm happy to help.\n\n"
+                f"Best,\n{settings.AGENT_NAME}\n{settings.COMPANY_NAME}"
             ),
         }
 
