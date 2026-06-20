@@ -23,7 +23,10 @@ body { background:#f0f4f1; font-family:'Segoe UI',sans-serif; min-height:100vh; 
 .divider { text-align:center; color:#6c757d; font-size:.85rem; margin:16px 0; position:relative; }
 .divider::before, .divider::after { content:''; position:absolute; top:50%; width:40%; height:1px; background:#e9ecef; }
 .divider::before { left:0; } .divider::after { right:0; }
-.alert-banner { display:none; border-radius:8px; padding:12px 16px; font-size:.9rem; margin-bottom:16px; }
+.alert-banner { display:none; border-radius:8px; padding:14px 16px; font-size:.92rem; margin-bottom:16px; font-weight:500; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)} }
+.shake { animation:shake .4s ease; }
+.field-error { border-color:#dc3545 !important; box-shadow:0 0 0 .2rem rgba(220,53,69,.2) !important; }
 </style>
 </head>
 <body>
@@ -133,27 +136,45 @@ window.addEventListener('load', () => {
 // ── Auth ───────────────────────────────────────────────────────────────────────
 async function handleLogin(e) {
   e.preventDefault();
+  clearFieldErrors();
   const btn = document.getElementById('loginBtn');
-  btn.textContent = 'Logging in...'; btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Logging in...';
+  btn.disabled = true;
   try {
     const form = new URLSearchParams();
     form.append('username', document.getElementById('loginEmail').value);
     form.append('password', document.getElementById('loginPassword').value);
     const res = await fetch('/auth/login', { method: 'POST', body: form });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Login failed');
+    if (!res.ok) {
+      const raw = data.detail || '';
+      let msg = 'Login failed. Please try again.';
+      if (raw.toLowerCase().includes('incorrect') || raw.toLowerCase().includes('password')) {
+        msg = 'Incorrect email or password. Please check and try again.';
+        setFieldError('loginEmail');
+        setFieldError('loginPassword');
+      } else if (raw.toLowerCase().includes('not found') || raw.toLowerCase().includes('no user')) {
+        msg = 'No account found with that email. Did you mean to sign up?';
+        setFieldError('loginEmail');
+      } else if (raw) {
+        msg = raw;
+      }
+      throw new Error(msg);
+    }
     localStorage.setItem('token', data.access_token);
     localStorage.setItem('user', JSON.stringify(data.user));
     window.location.href = '/dashboard';
   } catch(err) {
-    showAlert(err.message, 'danger');
-  } finally { btn.textContent = 'Log In'; btn.disabled = false; }
+    showAlert('<i class="bi bi-exclamation-circle-fill me-2"></i>' + err.message, 'danger');
+  } finally { btn.innerHTML = 'Log In'; btn.disabled = false; }
 }
 
 async function handleRegister(e) {
   e.preventDefault();
+  clearFieldErrors();
   const btn = document.getElementById('registerBtn');
-  btn.textContent = 'Creating account...'; btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating account...';
+  btn.disabled = true;
   const plan = document.querySelector('input[name="plan"]:checked')?.value || 'starter';
   try {
     const res = await fetch('/auth/register', {
@@ -167,22 +188,55 @@ async function handleRegister(e) {
       })
     });
     const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Registration failed');
+    if (!res.ok) {
+      const raw = data.detail || '';
+      let msg = 'Registration failed. Please try again.';
+      if (raw.toLowerCase().includes('already')) {
+        msg = 'That email is already registered. Try logging in instead.';
+        setFieldError('regEmail');
+      } else if (raw.toLowerCase().includes('email')) {
+        msg = 'Please enter a valid email address.';
+        setFieldError('regEmail');
+      } else if (raw.toLowerCase().includes('password')) {
+        msg = 'Password must be at least 8 characters.';
+        setFieldError('regPassword');
+      } else if (raw) {
+        msg = raw;
+      }
+      throw new Error(msg);
+    }
     localStorage.setItem('token', data.access_token);
     localStorage.setItem('user', JSON.stringify(data.user));
     window.location.href = '/dashboard';
   } catch(err) {
-    showAlert(err.message, 'danger');
-  } finally { btn.textContent = 'Start 14-Day Free Trial →'; btn.disabled = false; }
+    showAlert('<i class="bi bi-exclamation-circle-fill me-2"></i>' + err.message, 'danger');
+  } finally { btn.innerHTML = 'Start 14-Day Free Trial →'; btn.disabled = false; }
 }
 
 function showAlert(msg, type='danger') {
   const el = document.getElementById('alertBanner');
   el.className = `alert-banner alert alert-${type}`;
-  el.textContent = msg;
+  el.innerHTML = msg;
   el.style.display = '';
+  el.classList.remove('shake');
+  void el.offsetWidth; // force reflow so shake restarts
+  el.classList.add('shake');
+  el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
-function clearAlert() { document.getElementById('alertBanner').style.display = 'none'; }
+
+function clearAlert() {
+  const el = document.getElementById('alertBanner');
+  el.style.display = 'none';
+  el.classList.remove('shake');
+}
+
+function setFieldError(id) {
+  document.getElementById(id)?.classList.add('field-error');
+}
+
+function clearFieldErrors() {
+  document.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
+}
 </script>
 </body>
 </html>
