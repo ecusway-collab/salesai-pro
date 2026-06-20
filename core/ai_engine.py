@@ -155,16 +155,16 @@ LEAD DETAILS:
 - Product Focus: {product_focus or 'health and wealth solutions'}
 
 SCRIPT RULES:
-1. OPENING: Start with their name, create INSTANT CURIOSITY with a bold statement or surprising fact. Do NOT just say "I'm calling to share products." Make them think "wait, what?" — hook them in the first 5 seconds.
+1. OPENING: Start with their name, create INSTANT CURIOSITY with a bold statement or surprising fact. Do NOT say "press 1" or "press 2" — the system handles that. Do NOT just say "I'm calling to share products." Make them think "wait, what?" — hook them in the first 5 seconds. ALWAYS end the opening by asking about their specific health goal or issue — e.g. "Can I ask — what's the one health challenge you'd love to sort out this year?" The system will then prompt them to just say yes if they want to learn more.
 2. URGENCY: Include a time-sensitive reason to act NOW (limited spots, special offer this week, product just launched, etc.)
 3. SOCIAL PROOF: Mention that others like them are already getting results
 4. BENEFIT-FIRST: Lead with what they GAIN, not what the product IS
-5. EASY YES: The call-to-action must be low-commitment and easy to say yes to (visit the website, get a free info pack, quick 2-minute callback)
+5. EASY YES: The call-to-action must feel like a casual conversation, not a sales pitch
 6. VOICEMAIL: Must be irresistible — they should WANT to call back or visit the site
 
 Return a JSON object with these exact fields:
 {{
-  "opening": "20-30 second hook — bold, energetic, curiosity-driven. Use their name. End with an engaging question.",
+  "opening": "20-30 second spoken hook — warm, energetic, curiosity-driven. Use their name. End with a question about their health goals or biggest health challenge. Do NOT include 'press 1' or 'press 2' instructions.",
   "discovery_questions": ["question 1", "question 2", "question 3"],
   "value_proposition": "Exciting 2-3 sentence pitch focused on transformation and results, not features",
   "objection_handlers": {{
@@ -184,7 +184,7 @@ Return a JSON object with these exact fields:
     except Exception:
         name = lead.get('name', 'there')
         return {
-            "opening": f"Hey {name}! This is {settings.AGENT_NAME} from {settings.COMPANY_NAME} — and I'll be honest, I only have about 60 seconds but I think what I have to share could genuinely change things for you. People in your area are already seeing incredible results with what we offer, and I didn't want you to miss out. Can I take just one minute?",
+            "opening": f"Hey {name}! This is {settings.AGENT_NAME} from {settings.COMPANY_NAME} — quick question for you. We've been helping people in your area feel more energetic, healthier, and honestly just better overall. What's the one health challenge you'd love to finally sort out this year?",
             "discovery_questions": ["What's the one health or wellness goal you haven't been able to crack yet?", "If you could change one thing about how you feel every day, what would it be?", "Have you ever explored products that actually give you more energy and help you earn at the same time?"],
             "value_proposition": f"Here's the exciting part — {settings.COMPANY_NAME} isn't just about feeling better, it's about building a lifestyle. Our clients are getting real results fast, and many are even turning it into extra income. This isn't something you want to sleep on.",
             "objection_handlers": {

@@ -49,31 +49,29 @@ def make_outbound_call(lead_phone: str, lead_id: int, user=None) -> dict:
 
 
 def build_call_twiml(opening: str, gather_action_url: str) -> str:
-    """
-    Build TwiML for the opening of a cold call.
-    Uses Polly.Joanna for natural-sounding AI voice.
-    Lead can press 1 (interested), 2 (not interested), or speak freely.
-    """
+    """Build TwiML for the opening of a cold call. Lead just says yes or no — no keypads."""
     response = VoiceResponse()
 
     gather = Gather(
-        input="speech dtmf",
+        input="speech",
         action=gather_action_url,
         method="POST",
         speech_timeout="auto",
-        timeout=10,
-        num_digits=1,
+        timeout=12,
+        language="en-US",
     )
     gather.say(opening, voice="Google.en-US-Neural2-F", language="en-US")
     gather.say(
-        "Just say yes — and I promise you won't regret it. Or say no thanks if now truly isn't a good time.",
+        "Just say yes if you want to learn more — or say no thanks and I won't bother you again.",
         voice="Google.en-US-Neural2-F",
+        language="en-US",
     )
     response.append(gather)
 
     response.say(
-        "No worries! I'll follow up with you soon — and make sure to check out our website in the meantime. Have an amazing day!",
+        "No problem at all! I'll send you some information and follow up another time. Have a wonderful day!",
         voice="Google.en-US-Neural2-F",
+        language="en-US",
     )
     response.hangup()
     return str(response)
@@ -84,24 +82,25 @@ def build_call_twiml_elevenlabs(opening: str, gather_action_url: str, audio_url:
     response = VoiceResponse()
 
     gather = Gather(
-        input="speech dtmf",
+        input="speech",
         action=gather_action_url,
         method="POST",
-        speech_timeout="3",
-        timeout=10,
-        num_digits=1,
+        speech_timeout="auto",
+        timeout=12,
+        language="en-US",
     )
     gather.play(audio_url)
     gather.say(
-        "Just say yes and I'll tell you more, or say no thanks if now isn't a good time.",
+        "Just say yes if you want to learn more — or say no thanks and I won't bother you again.",
         voice="Google.en-US-Neural2-F",
+        language="en-US",
     )
     response.append(gather)
 
     response.say(
-        "I didn't catch that — no problem at all! I'll follow up another time. "
-        "Have a wonderful and healthy day!",
+        "No problem at all! I'll send you some information and follow up another time. Have a wonderful day!",
         voice="Google.en-US-Neural2-F",
+        language="en-US",
     )
     response.hangup()
     return str(response)
