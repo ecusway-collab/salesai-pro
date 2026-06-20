@@ -212,7 +212,7 @@ Return JSON:
 {{
   "subject": "Compelling subject line (not spammy, max 60 chars)",
   "preview_text": "Email preview/preheader text (max 90 chars)",
-  "body": "Full email body. Use \\n for line breaks. Sign off as {settings.AGENT_NAME} from {settings.COMPANY_NAME}. Include one clear call-to-action."
+  "body": "Full email body. Use \\n for line breaks. Sign off as {settings.AGENT_NAME} from {settings.COMPANY_NAME}. Include one clear call-to-action pointing them to {settings.SHOP_URL} to learn more. Do NOT ask them to reply to the email. Mention that we will follow up with them soon."
 }}"""
 
     try:
@@ -227,8 +227,8 @@ Return JSON:
                 f"Hi {name},\n\n"
                 f"Thank you for your time! I wanted to follow up and share more about how {settings.COMPANY_NAME} can help you.\n\n"
                 f"We offer solutions designed to support your goals — whether that's health, wellness, or building a better lifestyle.\n\n"
-                f"Visit us at {settings.SHOP_URL} to explore what we have available.\n\n"
-                f"Have questions? Just reach out — I'm happy to help.\n\n"
+                f"Visit our website to explore everything we have available:\n{settings.SHOP_URL}\n\n"
+                f"We'll be following up with you soon. Stay tuned!\n\n"
                 f"Best,\n{settings.AGENT_NAME}\n{settings.COMPANY_NAME}"
             ),
         }
