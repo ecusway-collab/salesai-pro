@@ -26,3 +26,24 @@ def get_db():
 def init_db():
     import models  # noqa: F401
     Base.metadata.create_all(bind=engine)
+    _migrate()
+
+
+def _migrate():
+    """Safely add new columns to existing tables without dropping data."""
+    new_columns = [
+        ("users", "from_email",         "VARCHAR(200)"),
+        ("users", "from_name",          "VARCHAR(200)"),
+        ("users", "elevenlabs_api_key", "VARCHAR(300)"),
+    ]
+    with engine.connect() as conn:
+        for table, column, col_type in new_columns:
+            try:
+                conn.execute(
+                    __import__("sqlalchemy").text(
+                        f"ALTER TABLE {table} ADD COLUMN {column} {col_type}"
+                    )
+                )
+                conn.commit()
+            except Exception:
+                conn.rollback()  # column already exists — skip
