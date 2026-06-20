@@ -133,51 +133,83 @@ window.addEventListener('load', () => {
   selectPlan('starter'); // default highlight
 });
 
+// ── Fetch with timeout ────────────────────────────────────────────────────────
+async function fetchWithTimeout(url, options, timeoutMs = 40000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // ── Auth ───────────────────────────────────────────────────────────────────────
 async function handleLogin(e) {
   e.preventDefault();
   clearFieldErrors();
+  clearAlert();
   const btn = document.getElementById('loginBtn');
-  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Logging in...';
-  btn.disabled = true;
+  setLoading(btn, true, '<span class="spinner-border spinner-border-sm me-2"></span>Logging in...');
+
+  // After 4 seconds still loading → show "warming up" notice
+  const warmupTimer = setTimeout(() => {
+    showAlert('<i class="bi bi-hourglass-split me-2"></i>Server is starting up — please wait a moment...', 'warning');
+  }, 4000);
+
   try {
     const form = new URLSearchParams();
     form.append('username', document.getElementById('loginEmail').value);
     form.append('password', document.getElementById('loginPassword').value);
-    const res = await fetch('/auth/login', { method: 'POST', body: form });
-    const data = await res.json();
+    const res = await fetchWithTimeout('/auth/login', { method: 'POST', body: form });
+    clearTimeout(warmupTimer);
+    let data;
+    try { data = await res.json(); } catch { data = {}; }
     if (!res.ok) {
-      const raw = data.detail || '';
+      const raw = (data.detail || '').toLowerCase();
       let msg = 'Login failed. Please try again.';
-      if (raw.toLowerCase().includes('incorrect') || raw.toLowerCase().includes('password')) {
+      if (raw.includes('incorrect') || raw.includes('password') || raw.includes('unauthorized')) {
         msg = 'Incorrect email or password. Please check and try again.';
-        setFieldError('loginEmail');
-        setFieldError('loginPassword');
-      } else if (raw.toLowerCase().includes('not found') || raw.toLowerCase().includes('no user')) {
+        setFieldError('loginEmail'); setFieldError('loginPassword');
+      } else if (raw.includes('not found') || raw.includes('no user')) {
         msg = 'No account found with that email. Did you mean to sign up?';
         setFieldError('loginEmail');
-      } else if (raw) {
-        msg = raw;
+      } else if (data.detail) {
+        msg = data.detail;
       }
       throw new Error(msg);
     }
+    clearAlert();
+    showAlert('<i class="bi bi-check-circle-fill me-2"></i>Logged in! Redirecting...', 'success');
     localStorage.setItem('token', data.access_token);
     localStorage.setItem('user', JSON.stringify(data.user));
-    window.location.href = '/dashboard';
+    setTimeout(() => { window.location.href = '/dashboard'; }, 500);
   } catch(err) {
-    showAlert('<i class="bi bi-exclamation-circle-fill me-2"></i>' + err.message, 'danger');
-  } finally { btn.innerHTML = 'Log In'; btn.disabled = false; }
+    clearTimeout(warmupTimer);
+    const msg = err.name === 'AbortError'
+      ? 'The server took too long to respond. Please try again in a moment.'
+      : (err.message === 'Failed to fetch'
+        ? 'Could not connect to the server. Please check your connection and try again.'
+        : err.message);
+    showAlert('<i class="bi bi-exclamation-circle-fill me-2"></i>' + msg, 'danger');
+    setLoading(btn, false, 'Log In');
+  }
 }
 
 async function handleRegister(e) {
   e.preventDefault();
   clearFieldErrors();
+  clearAlert();
   const btn = document.getElementById('registerBtn');
-  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating account...';
-  btn.disabled = true;
+  setLoading(btn, true, '<span class="spinner-border spinner-border-sm me-2"></span>Creating your account...');
+
+  const warmupTimer = setTimeout(() => {
+    showAlert('<i class="bi bi-hourglass-split me-2"></i>Server is starting up — please wait a moment...', 'warning');
+  }, 4000);
+
   const plan = document.querySelector('input[name="plan"]:checked')?.value || 'starter';
   try {
-    const res = await fetch('/auth/register', {
+    const res = await fetchWithTimeout('/auth/register', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
@@ -187,30 +219,47 @@ async function handleRegister(e) {
         plan,
       })
     });
-    const data = await res.json();
+    clearTimeout(warmupTimer);
+    let data;
+    try { data = await res.json(); } catch { data = {}; }
     if (!res.ok) {
-      const raw = data.detail || '';
+      const raw = (data.detail || '').toLowerCase();
       let msg = 'Registration failed. Please try again.';
-      if (raw.toLowerCase().includes('already')) {
+      if (raw.includes('already')) {
         msg = 'That email is already registered. Try logging in instead.';
         setFieldError('regEmail');
-      } else if (raw.toLowerCase().includes('email')) {
+      } else if (raw.includes('email')) {
         msg = 'Please enter a valid email address.';
         setFieldError('regEmail');
-      } else if (raw.toLowerCase().includes('password')) {
+      } else if (raw.includes('password')) {
         msg = 'Password must be at least 8 characters.';
         setFieldError('regPassword');
-      } else if (raw) {
-        msg = raw;
+      } else if (data.detail) {
+        msg = data.detail;
       }
       throw new Error(msg);
     }
+    clearAlert();
+    showAlert('<i class="bi bi-check-circle-fill me-2"></i>Account created! Redirecting to your dashboard...', 'success');
     localStorage.setItem('token', data.access_token);
     localStorage.setItem('user', JSON.stringify(data.user));
-    window.location.href = '/dashboard';
+    setTimeout(() => { window.location.href = '/dashboard'; }, 700);
   } catch(err) {
-    showAlert('<i class="bi bi-exclamation-circle-fill me-2"></i>' + err.message, 'danger');
-  } finally { btn.innerHTML = 'Start 14-Day Free Trial →'; btn.disabled = false; }
+    clearTimeout(warmupTimer);
+    const msg = err.name === 'AbortError'
+      ? 'The server took too long to respond. Please try again in a moment.'
+      : (err.message === 'Failed to fetch'
+        ? 'Could not connect to the server. Please check your connection and try again.'
+        : err.message);
+    showAlert('<i class="bi bi-exclamation-circle-fill me-2"></i>' + msg, 'danger');
+    setLoading(btn, false, 'Start 14-Day Free Trial →');
+  }
+}
+
+function setLoading(btn, loading, html) {
+  btn.innerHTML = html;
+  btn.disabled = loading;
+  btn.style.opacity = loading ? '0.85' : '1';
 }
 
 function showAlert(msg, type='danger') {
