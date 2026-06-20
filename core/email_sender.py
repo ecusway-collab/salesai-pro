@@ -7,11 +7,24 @@ from config import settings
 logger = logging.getLogger(__name__)
 
 
-def send_email(to_email: str, to_name: str, subject: str, body: str, lead_id: int = None) -> dict:
+def send_email(
+    to_email: str,
+    to_name: str,
+    subject: str,
+    body: str,
+    lead_id: int = None,
+    from_email_override: str = None,
+    from_name_override: str = None,
+    sendgrid_key_override: str = None,
+) -> dict:
     """Send a plain-text / light-HTML email via SendGrid."""
-    if not settings.SENDGRID_API_KEY:
+    api_key = sendgrid_key_override or settings.SENDGRID_API_KEY
+    if not api_key:
         logger.warning("SendGrid API key not configured — email skipped")
         return {"success": False, "error": "SendGrid not configured"}
+
+    sender_email = from_email_override or settings.FROM_EMAIL
+    sender_name = from_name_override or settings.FROM_NAME
 
     unsubscribe_url = f"{settings.BASE_URL}/unsubscribe/{lead_id}" if lead_id else f"{settings.BASE_URL}/unsubscribe/0"
     unsubscribe_line = f"\n\n---\nTo unsubscribe from future emails, click here: {unsubscribe_url}"
@@ -21,7 +34,7 @@ def send_email(to_email: str, to_name: str, subject: str, body: str, lead_id: in
     html_body += f'<br><br><hr><small><a href="{unsubscribe_url}" style="color:#999">Unsubscribe</a></small>'
 
     message = Mail(
-        from_email=Email(settings.FROM_EMAIL, settings.FROM_NAME),
+        from_email=Email(sender_email, sender_name),
         to_emails=To(to_email, to_name),
         subject=subject,
     )
@@ -31,7 +44,7 @@ def send_email(to_email: str, to_name: str, subject: str, body: str, lead_id: in
     ]
 
     try:
-        sg = SendGridAPIClient(settings.SENDGRID_API_KEY)
+        sg = SendGridAPIClient(api_key)
         response = sg.send(message)
         logger.info(f"Email sent to {to_email}: status={response.status_code}")
         return {"success": True, "status_code": response.status_code}

@@ -37,9 +37,12 @@ class CredentialsUpdate(BaseModel):
     anthropic_api_key: Optional[str] = None
     sendgrid_api_key: Optional[str] = None
     google_maps_api_key: Optional[str] = None
+    elevenlabs_api_key: Optional[str] = None
     company_name: Optional[str] = None
     agent_name: Optional[str] = None
     shop_url: Optional[str] = None
+    from_email: Optional[str] = None
+    from_name: Optional[str] = None
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
@@ -138,10 +141,13 @@ def _user_dict(user: User) -> dict:
         "company_name": user.company_name,
         "agent_name": user.agent_name,
         "shop_url": user.shop_url,
+        "from_email": user.from_email,
+        "from_name": user.from_name,
         "has_twilio": bool(user.twilio_account_sid),
         "has_anthropic": bool(user.anthropic_api_key),
         "has_sendgrid": bool(user.sendgrid_api_key),
         "has_google_maps": bool(user.google_maps_api_key),
+        "has_elevenlabs": bool(user.elevenlabs_api_key),
         "leads_limit": user.leads_limit(),
         "calls_limit": user.calls_limit(),
         "created_at": str(user.created_at)[:10] if user.created_at else None,

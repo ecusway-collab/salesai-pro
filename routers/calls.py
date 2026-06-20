@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from typing import Optional
 
 from database import get_db
-from models import Lead, Interaction, FollowUp
+from models import Lead, Interaction, FollowUp, User
 from core.voice_caller import make_outbound_call
 from core.sms_sender import send_sms
 from core.email_sender import send_email
@@ -131,10 +131,15 @@ def send_email_to_lead(
     }
     email_data = generate_email(lead_dict, history, email_type)
 
+    user = db.query(User).filter(User.id == lead.user_id).first() if lead.user_id else None
     result = send_email(
         lead.email, lead.name,
         email_data.get("subject", "Checking in on your wellness journey"),
         email_data.get("body", ""),
+        lead_id=lead.id,
+        from_email_override=user.from_email if user and user.from_email else None,
+        from_name_override=user.from_name if user and user.from_name else None,
+        sendgrid_key_override=user.sendgrid_api_key if user and user.sendgrid_api_key else None,
     )
 
     interaction = Interaction(

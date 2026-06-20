@@ -44,6 +44,9 @@ class User(Base):
     company_name = Column(String(200), default="My Company")
     agent_name = Column(String(100), default="Alex")
     shop_url = Column(String(500))
+    from_email = Column(String(200))
+    from_name = Column(String(200))
+    elevenlabs_api_key = Column(String(300))
 
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())

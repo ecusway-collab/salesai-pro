@@ -401,31 +401,105 @@ body { background: #f0f4f1; font-family: 'Segoe UI', sans-serif; }
   <!-- ══════════════ SETTINGS PAGE ══════════════ -->
   <div id="page-settings" class="page">
     <div class="row g-3">
+
+      <!-- Left column: API Credentials -->
       <div class="col-lg-6">
         <div class="card">
-          <div class="card-header">Your API Credentials</div>
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span>API Credentials</span>
+            <small class="text-muted">Stored securely per account</small>
+          </div>
           <div class="card-body">
-            <p class="text-muted small mb-3">These are stored securely in your account. The system uses your credentials to make calls and send messages.</p>
-            <div class="mb-3"><label class="form-label fw-semibold small">Anthropic API Key</label><input class="form-control form-control-sm" type="password" id="cred-anthropic" placeholder="sk-ant-api03-..."></div>
-            <div class="mb-3"><label class="form-label fw-semibold small">Twilio Account SID</label><input class="form-control form-control-sm" id="cred-twilio-sid" placeholder="ACxxxxxxxxxxxxxxxx"></div>
-            <div class="mb-3"><label class="form-label fw-semibold small">Twilio Auth Token</label><input class="form-control form-control-sm" type="password" id="cred-twilio-token" placeholder="Auth token"></div>
-            <div class="mb-3"><label class="form-label fw-semibold small">Twilio Phone Number</label><input class="form-control form-control-sm" id="cred-twilio-phone" placeholder="+1xxxxxxxxxx"></div>
-            <div class="mb-3"><label class="form-label fw-semibold small">SendGrid API Key (email)</label><input class="form-control form-control-sm" type="password" id="cred-sendgrid" placeholder="SG.xxxxx (optional)"></div>
-            <div class="mb-3"><label class="form-label fw-semibold small">Google Maps API Key (lead finder)</label><input class="form-control form-control-sm" type="password" id="cred-gmaps" placeholder="AIzaSy... (optional)"></div>
-            <button class="btn btn-green btn-sm px-4" onclick="saveCredentials()">Save Credentials</button>
+            <p class="text-muted small mb-3">Each business enters their own keys. The system uses these to make calls, send messages, and find leads.</p>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small d-flex justify-content-between">
+                Anthropic API Key (AI)
+                <span id="badge-anthropic" class="badge bg-secondary">not set</span>
+              </label>
+              <input class="form-control form-control-sm" type="password" id="cred-anthropic" placeholder="sk-ant-api03-...">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small d-flex justify-content-between">
+                Twilio Account SID (calls &amp; SMS)
+                <span id="badge-twilio" class="badge bg-secondary">not set</span>
+              </label>
+              <input class="form-control form-control-sm" id="cred-twilio-sid" placeholder="ACxxxxxxxxxxxxxxxx">
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">Twilio Auth Token</label>
+              <input class="form-control form-control-sm" type="password" id="cred-twilio-token" placeholder="Auth token">
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">Twilio Phone Number</label>
+              <input class="form-control form-control-sm" id="cred-twilio-phone" placeholder="+1xxxxxxxxxx">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small d-flex justify-content-between">
+                SendGrid API Key (email)
+                <span id="badge-sendgrid" class="badge bg-secondary">not set</span>
+              </label>
+              <input class="form-control form-control-sm" type="password" id="cred-sendgrid" placeholder="SG.xxxxx">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small d-flex justify-content-between">
+                Google Maps API Key (lead finder)
+                <span id="badge-gmaps" class="badge bg-secondary">not set</span>
+              </label>
+              <input class="form-control form-control-sm" type="password" id="cred-gmaps" placeholder="AIzaSy...">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small d-flex justify-content-between">
+                ElevenLabs API Key (AI voice)
+                <span id="badge-elevenlabs" class="badge bg-secondary">not set</span>
+              </label>
+              <input class="form-control form-control-sm" type="password" id="cred-elevenlabs" placeholder="el_...">
+            </div>
+
+            <button class="btn btn-green btn-sm px-4" onclick="saveCredentials()"><i class="bi bi-save me-1"></i>Save Credentials</button>
           </div>
         </div>
       </div>
+
+      <!-- Right column: Branding + Subscription -->
       <div class="col-lg-6">
         <div class="card mb-3">
-          <div class="card-header">Branding</div>
+          <div class="card-header">Company Settings</div>
           <div class="card-body">
-            <div class="mb-3"><label class="form-label fw-semibold small">Company Name</label><input class="form-control form-control-sm" id="cred-company" placeholder="Your Company"></div>
-            <div class="mb-3"><label class="form-label fw-semibold small">AI Agent Name</label><input class="form-control form-control-sm" id="cred-agent" placeholder="Alex"></div>
-            <div class="mb-3"><label class="form-label fw-semibold small">Shop / Product URL</label><input class="form-control form-control-sm" id="cred-shop" placeholder="https://..."></div>
-            <button class="btn btn-green btn-sm px-4" onclick="saveCredentials()">Save Branding</button>
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">Company Name</label>
+              <input class="form-control form-control-sm" id="cred-company" placeholder="Vital Health Global">
+              <div class="form-text">Shown in call scripts and emails</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">AI Agent Name</label>
+              <input class="form-control form-control-sm" id="cred-agent" placeholder="Alex">
+              <div class="form-text">Name the AI uses when introducing itself</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">Shop / Product URL</label>
+              <input class="form-control form-control-sm" id="cred-shop" placeholder="https://yourstore.com">
+              <div class="form-text">Included in emails and scripts</div>
+            </div>
+            <hr class="my-3">
+            <p class="text-muted small fw-semibold mb-2">Email Sender Identity</p>
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">From Email Address</label>
+              <input class="form-control form-control-sm" id="cred-from-email" placeholder="noreply@yourcompany.com">
+              <div class="form-text">Must be verified in SendGrid</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">From Name</label>
+              <input class="form-control form-control-sm" id="cred-from-name" placeholder="Your Company">
+            </div>
+            <button class="btn btn-green btn-sm px-4" onclick="saveCredentials()"><i class="bi bi-save me-1"></i>Save Company Settings</button>
           </div>
         </div>
+
         <div class="card">
           <div class="card-header">Subscription</div>
           <div class="card-body">
@@ -437,6 +511,7 @@ body { background: #f0f4f1; font-family: 'Segoe UI', sans-serif; }
           </div>
         </div>
       </div>
+
     </div>
   </div>
 

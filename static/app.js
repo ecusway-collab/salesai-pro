@@ -602,10 +602,26 @@ async function rescoreLead(leadId) {
 
 async function checkSettings() {
   if (!currentUser) return;
+
   // Pre-fill branding fields
   document.getElementById('cred-company').value = currentUser.company_name || '';
   document.getElementById('cred-agent').value = currentUser.agent_name || '';
   document.getElementById('cred-shop').value = currentUser.shop_url || '';
+  document.getElementById('cred-from-email').value = currentUser.from_email || '';
+  document.getElementById('cred-from-name').value = currentUser.from_name || '';
+
+  // Status badges
+  function setBadge(id, isSet) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.className = isSet ? 'badge bg-success' : 'badge bg-secondary';
+    el.textContent = isSet ? '✓ connected' : 'not set';
+  }
+  setBadge('badge-anthropic', currentUser.has_anthropic);
+  setBadge('badge-twilio', currentUser.has_twilio);
+  setBadge('badge-sendgrid', currentUser.has_sendgrid);
+  setBadge('badge-gmaps', currentUser.has_google_maps);
+  setBadge('badge-elevenlabs', currentUser.has_elevenlabs);
 
   // Show subscription info
   const planNames = { starter: 'Starter — $49/mo', pro: 'Pro — $99/mo', agency: 'Agency — $199/mo' };
@@ -622,10 +638,18 @@ async function checkSettings() {
 async function saveCredentials() {
   const data = {};
   const fields = {
-    'cred-anthropic': 'anthropic_api_key', 'cred-twilio-sid': 'twilio_account_sid',
-    'cred-twilio-token': 'twilio_auth_token', 'cred-twilio-phone': 'twilio_phone_number',
-    'cred-sendgrid': 'sendgrid_api_key', 'cred-gmaps': 'google_maps_api_key',
-    'cred-company': 'company_name', 'cred-agent': 'agent_name', 'cred-shop': 'shop_url',
+    'cred-anthropic': 'anthropic_api_key',
+    'cred-twilio-sid': 'twilio_account_sid',
+    'cred-twilio-token': 'twilio_auth_token',
+    'cred-twilio-phone': 'twilio_phone_number',
+    'cred-sendgrid': 'sendgrid_api_key',
+    'cred-gmaps': 'google_maps_api_key',
+    'cred-elevenlabs': 'elevenlabs_api_key',
+    'cred-company': 'company_name',
+    'cred-agent': 'agent_name',
+    'cred-shop': 'shop_url',
+    'cred-from-email': 'from_email',
+    'cred-from-name': 'from_name',
   };
   Object.entries(fields).forEach(([id, key]) => {
     const val = document.getElementById(id)?.value?.trim();
@@ -633,8 +657,9 @@ async function saveCredentials() {
   });
   try {
     await apiFetch('/auth/credentials', { method: 'PATCH', body: JSON.stringify(data) });
-    showToast('Credentials saved!', 'success');
-    await initAuth(); // refresh user info
+    showToast('Settings saved!', 'success');
+    await initAuth();
+    checkSettings();
   } catch(e) { /* handled */ }
 }
 
