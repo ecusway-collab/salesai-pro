@@ -101,6 +101,6 @@ def unsubscribe(lead_id: int):
     <div class="text-center p-5">
     <h2 class="text-success">&#10003; Unsubscribed</h2>
     <p class="text-muted">Hi {name}, you have been removed from our mailing list.<br>
-    You will no longer receive emails or calls from Vital Health Global.</p>
+    You will no longer receive emails or calls from Primitive Solution.</p>
     <a href="/" class="btn btn-outline-secondary mt-3">Go to Homepage</a>
     </div></body></html>""")
