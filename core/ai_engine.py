@@ -104,30 +104,37 @@ def generate_cold_call_script(lead: dict, product_focus: str = None, user=None) 
     Returns: opening, discovery_questions, value_prop, objection_handlers,
              call_to_action, voicemail_script
     """
-    prompt = f"""Generate a personalized cold call script for this lead.
+    prompt = f"""Generate a HIGH-ENERGY, PERSUASIVE cold call script for this lead. The goal is to create IMMEDIATE EXCITEMENT and URGENCY so they want to take action RIGHT NOW.
 
 LEAD DETAILS:
 - Name: {lead.get('name', 'there')}
 - Company: {lead.get('company', 'not specified')}
 - Health Interest: {lead.get('health_interest', 'general wellness')}
 - Pain Points: {lead.get('pain_points', 'unknown')}
-- Notes: {lead.get('notes', 'none')}
-- Product Focus: {product_focus or 'general natural health products'}
+- Product Focus: {product_focus or 'health and wealth solutions'}
+
+SCRIPT RULES:
+1. OPENING: Start with their name, create INSTANT CURIOSITY with a bold statement or surprising fact. Do NOT just say "I'm calling to share products." Make them think "wait, what?" — hook them in the first 5 seconds.
+2. URGENCY: Include a time-sensitive reason to act NOW (limited spots, special offer this week, product just launched, etc.)
+3. SOCIAL PROOF: Mention that others like them are already getting results
+4. BENEFIT-FIRST: Lead with what they GAIN, not what the product IS
+5. EASY YES: The call-to-action must be low-commitment and easy to say yes to (visit the website, get a free info pack, quick 2-minute callback)
+6. VOICEMAIL: Must be irresistible — they should WANT to call back or visit the site
 
 Return a JSON object with these exact fields:
 {{
-  "opening": "The first 20-30 seconds — introduce yourself warmly, state reason for call, create curiosity",
-  "discovery_questions": ["question 1", "question 2", "question 3", "question 4"],
-  "value_proposition": "2-3 sentences on how our products solve their health needs",
+  "opening": "20-30 second hook — bold, energetic, curiosity-driven. Use their name. End with an engaging question.",
+  "discovery_questions": ["question 1", "question 2", "question 3"],
+  "value_proposition": "Exciting 2-3 sentence pitch focused on transformation and results, not features",
   "objection_handlers": {{
-    "too expensive": "response...",
-    "not interested": "response...",
-    "already have a supplier": "response...",
-    "send me info": "response...",
-    "call back later": "response..."
+    "too expensive": "reframe as investment + mention easy entry point",
+    "not interested": "create curiosity — what if they're missing out on something huge?",
+    "already have a supplier": "acknowledge + offer something they don't currently have",
+    "send me info": "yes AND get a commitment for a quick follow-up call",
+    "call back later": "lock in a specific time right now"
   }},
-  "call_to_action": "Specific next step to propose (schedule follow-up call, send samples, book consultation)",
-  "voicemail_script": "Max 25-second voicemail if they don't answer"
+  "call_to_action": "Low-commitment next step — visit the website, get a free info pack, or book a 5-minute callback",
+  "voicemail_script": "Irresistible 20-second voicemail — hint at something exciting they're missing, include the website URL"
 }}"""
 
     try:
@@ -136,12 +143,18 @@ Return a JSON object with these exact fields:
     except Exception:
         name = lead.get('name', 'there')
         return {
-            "opening": f"Hi {name}, my name is {settings.AGENT_NAME} calling from {settings.COMPANY_NAME}. I'm reaching out because we help businesses and individuals discover powerful health and wealth solutions. Do you have just 60 seconds?",
-            "discovery_questions": ["What's your biggest challenge right now?", "Have you explored health or wellness products before?", "What does your ideal outcome look like?"],
-            "value_proposition": f"{settings.COMPANY_NAME} offers premium solutions backed by results. We have products and opportunities that fit every lifestyle and goal.",
-            "objection_handlers": {"too expensive": "I understand — we also have starter options and opportunities to earn while you explore.", "not interested": "No problem at all! Can I send you some information to review at your own pace?"},
-            "call_to_action": "I'd love to send you more information. What's the best email for you?",
-            "voicemail_script": f"Hi {name}, this is {settings.AGENT_NAME} from {settings.COMPANY_NAME}. I'm calling to share some exciting solutions that may be a great fit for you. Please call me back or visit {settings.SHOP_URL}. Have a great day!",
+            "opening": f"Hey {name}! This is {settings.AGENT_NAME} from {settings.COMPANY_NAME} — and I'll be honest, I only have about 60 seconds but I think what I have to share could genuinely change things for you. People in your area are already seeing incredible results with what we offer, and I didn't want you to miss out. Can I take just one minute?",
+            "discovery_questions": ["What's the one health or wellness goal you haven't been able to crack yet?", "If you could change one thing about how you feel every day, what would it be?", "Have you ever explored products that actually give you more energy and help you earn at the same time?"],
+            "value_proposition": f"Here's the exciting part — {settings.COMPANY_NAME} isn't just about feeling better, it's about building a lifestyle. Our clients are getting real results fast, and many are even turning it into extra income. This isn't something you want to sleep on.",
+            "objection_handlers": {
+                "too expensive": "I completely get that — and that's exactly why we have a starter option that costs less than a cup of coffee a day. The real question is, can you afford NOT to feel your best?",
+                "not interested": "Fair enough! But can I ask — what if I told you that people who said the same thing are now our biggest success stories? Just take 30 seconds to check out the website and decide for yourself.",
+                "already have a supplier": "That's great — but what if what we have fills a gap your current supplier doesn't? Most of our clients said the same thing before they tried us.",
+                "send me info": "Absolutely — and I'll send it right now. But let's also lock in a quick 5-minute call this week so I can answer your questions personally. What day works better for you, Tuesday or Thursday?",
+                "call back later": "Of course! I respect your time. Let's make it official — does tomorrow morning or afternoon work better for you?"
+            },
+            "call_to_action": f"Here's what I want you to do right now — just visit {settings.SHOP_URL} and take a look. Takes 2 minutes. And I'll personally follow up with you to make sure you get the best deal available.",
+            "voicemail_script": f"Hey {name}, it's {settings.AGENT_NAME} from {settings.COMPANY_NAME}. I was going to share something pretty exciting with you — something people in your area are already taking advantage of. I don't want you to miss the window on this. Check us out at {settings.SHOP_URL} — and I'll follow up soon. Talk soon!",
         }
 
 

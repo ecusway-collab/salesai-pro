@@ -66,13 +66,13 @@ def build_call_twiml(opening: str, gather_action_url: str) -> str:
     )
     gather.say(opening, voice="Google.en-US-Neural2-F", language="en-US")
     gather.say(
-        "Just say yes and I'll tell you more, or say no thanks if now isn't a good time.",
+        "Just say yes — and I promise you won't regret it. Or say no thanks if now truly isn't a good time.",
         voice="Google.en-US-Neural2-F",
     )
     response.append(gather)
 
     response.say(
-        "No worries at all! I'll reach out another time. Have a wonderful day!",
+        "No worries! I'll follow up with you soon — and make sure to check out our website in the meantime. Have an amazing day!",
         voice="Google.en-US-Neural2-F",
     )
     response.hangup()

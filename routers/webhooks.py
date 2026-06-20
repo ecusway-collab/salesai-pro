@@ -92,10 +92,11 @@ async def voice_gather(request: Request, lead_id: int, db: Session = Depends(get
             lead.updated_at = datetime.now()
             db.commit()
         response_text = (
-            f"Wonderful! We specialize in natural health supplements and wellness programs "
-            f"that help people like you feel their absolute best. "
-            f"Can I ask — what's your biggest health concern right now? Whether it's energy, "
-            f"sleep, weight, or just overall wellness, we likely have something perfect for you."
+            f"Amazing — I love that! Here's what I want you to do. "
+            f"Go to our website right now and take a look at what we offer — "
+            f"it only takes two minutes and I think you'll be genuinely surprised. "
+            f"Our team is going to follow up with you personally to make sure you get the best deal available. "
+            f"Can I ask quickly — what's your biggest goal right now? Energy, wellness, or maybe even earning extra income?"
         )
         gather_url = f"{_base_url()}/webhooks/voice/gather2?lead_id={lead_id}"
         twiml = build_response_twiml(response_text, gather_url)
@@ -146,9 +147,10 @@ async def voice_gather2(request: Request, lead_id: int, db: Session = Depends(ge
         db.commit()
 
     closing = (
-        "That's really helpful to know. I'll follow up with some personalized information "
-        "that I think will genuinely help you. "
-        "Thank you so much for your time today, and I hope you have a fantastic, healthy day!"
+        "Perfect — that's exactly what we can help with! "
+        "I'm going to send you some information right now and our team will follow up with you very soon. "
+        "In the meantime, check out our website — the link will be in the message we send you. "
+        "Thank you so much for your time, and get ready — exciting things are coming your way!"
     )
     twiml = build_response_twiml(closing)
     return xml_response(twiml)
