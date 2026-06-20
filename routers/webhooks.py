@@ -5,7 +5,7 @@ call status callbacks, SMS status callbacks, and incoming SMS replies.
 import json
 import logging
 from datetime import datetime
-from fastapi import APIRouter, Request, Response, Depends
+from fastapi import APIRouter, Request, Response, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -39,7 +39,7 @@ async def voice_answer(request: Request, lead_id: int, db: Session = Depends(get
             "notes": lead.notes if lead else "",
         }
         script = generate_cold_call_script(lead_dict)
-        opening = script.get("opening", f"Hi {name}, this is {_agent_name()} calling from Vital Health Global. I hope I'm not catching you at a bad time? We help people discover natural health solutions for energy, wellness and vitality. Do you have just 60 seconds?")
+        opening = script.get("opening", f"Hi {name}, this is {_agent_name()} calling from {_company_name()}. I hope I'm not catching you at a bad time? We help people discover powerful health and wellness solutions. Do you have just 60 seconds?")
 
         gather_url = f"{_base_url()}/webhooks/voice/gather?lead_id={lead_id}"
         from config import settings as _s
@@ -54,7 +54,7 @@ async def voice_answer(request: Request, lead_id: int, db: Session = Depends(get
         from twilio.twiml.voice_response import VoiceResponse
         r = VoiceResponse()
         from config import settings as _cfg
-        r.say(f"Hi, this is Alex from Vital Health Global. We offer premium natural health products that can help with energy, wellness and vitality. Please visit {_cfg.SHOP_URL} to learn more. Have a wonderful day!", voice="Polly.Joanna-Neural")
+        r.say(f"Hi, this is {_agent_name()} from {_company_name()}. Please visit {_cfg.SHOP_URL} to learn more about our products. Have a wonderful day!", voice="Polly.Joanna-Neural")
         r.hangup()
         return xml_response(str(r))
 
@@ -177,9 +177,9 @@ async def voice_amd(request: Request, lead_id: int, db: Session = Depends(get_db
             script = generate_cold_call_script(lead_dict)
             voicemail = script.get(
                 "voicemail_script",
-                f"Hi {lead.name}, this is {_agent_name()} from NaturalWell Health Solutions. "
-                f"I'm reaching out because we have some natural wellness products that many "
-                f"people in your area are loving. I'd love to chat — please call us back at your convenience. Have a healthy day!"
+                f"Hi {lead.name}, this is {_agent_name()} from {_company_name()}. "
+                f"I'm reaching out because we have some great products I think you'd love. "
+                f"I'd love to chat — please call us back at your convenience. Have a great day!"
             )
             # Update the live call with voicemail TwiML via Twilio API
             from core.voice_caller import get_client
@@ -286,7 +286,7 @@ async def sms_incoming(request: Request, db: Session = Depends(get_db)):
         resp.message("You've been removed from our list. We're sorry to see you go! Stay healthy. 🌿")
     else:
         resp.message(
-            f"Thanks for your reply! {_agent_name()} from NaturalWell will get back to you shortly. "
+            f"Thanks for your reply! {_agent_name()} from {_company_name()} will get back to you shortly. "
             f"Reply STOP to unsubscribe."
         )
 
@@ -320,8 +320,8 @@ async def call_audio(lead_id: int, db: Session = Depends(get_db)):
     )
 
     text = (
-        f"Hi {name}, this is Alex calling from Vital Health Global. "
-        f"We help people discover natural health solutions for energy, wellness and vitality. "
+        f"Hi {name}, this is {_agent_name()} calling from {_company_name()}. "
+        f"We help people discover powerful health and wellness solutions. "
         f"Do you have just 60 seconds?"
     )
     if interaction and interaction.content:
@@ -331,9 +331,18 @@ async def call_audio(lead_id: int, db: Session = Depends(get_db)):
         except Exception:
             pass
 
-    audio = generate_audio(text)
+    try:
+        audio = generate_audio(text)
+    except Exception as e:
+        logger.error(f"ElevenLabs TTS failed: {e}")
+        audio = None
+
     if not audio:
-        raise HTTPException(503, "TTS unavailable")
+        # Fall back to Polly TwiML so the call doesn't fail
+        from twilio.twiml.voice_response import VoiceResponse as VR
+        r = VR()
+        r.say(text, voice="Polly.Joanna-Neural", language="en-US")
+        return Response(content=str(r), media_type="application/xml")
 
     return FastResponse(content=audio, media_type="audio/mpeg")
 
@@ -346,3 +355,8 @@ def _base_url() -> str:
 def _agent_name() -> str:
     from config import settings
     return settings.AGENT_NAME
+
+
+def _company_name() -> str:
+    from config import settings
+    return settings.COMPANY_NAME
