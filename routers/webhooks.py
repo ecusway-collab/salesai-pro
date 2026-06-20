@@ -65,95 +65,121 @@ async def voice_gather(request: Request, lead_id: int, db: Session = Depends(get
     Called when lead responds (keypress or speech).
     AI decides how to respond.
     """
-    form = await request.form()
-    speech = form.get("SpeechResult", "").strip()
-    digits = form.get("Digits", "").strip()
+    try:
+        form = await request.form()
+        speech = form.get("SpeechResult", "") or ""
+        speech = speech.strip()
+        digits = form.get("Digits", "") or ""
+        digits = digits.strip()
 
-    lead = db.query(Lead).filter(Lead.id == lead_id).first()
-    response_text = ""
+        lead = db.query(Lead).filter(Lead.id == lead_id).first()
 
-    if digits == "2" or any(phrase in speech.lower() for phrase in [
-        "not interested", "remove", "don't call", "stop calling", "take me off"
-    ]):
-        if lead:
-            lead.do_not_contact = True
-            lead.status = "lost"
-            lead.updated_at = datetime.now()
-            db.commit()
-        response_text = "Absolutely, I'll remove you from our list right away. I'm sorry to have bothered you. Have a wonderful day and take care!"
-        twiml = build_response_twiml(response_text)
-        return xml_response(twiml)
+        if digits == "2" or any(phrase in speech.lower() for phrase in [
+            "not interested", "remove", "don't call", "stop calling", "take me off"
+        ]):
+            try:
+                if lead:
+                    lead.do_not_contact = True
+                    lead.status = "lost"
+                    lead.updated_at = datetime.now()
+                    db.commit()
+            except Exception as db_err:
+                logger.error(f"DB update error (opt-out) lead {lead_id}: {db_err}")
+            response_text = "Absolutely, I'll remove you from our list right away. I'm sorry to have bothered you. Have a wonderful day and take care!"
+            return xml_response(build_response_twiml(response_text))
 
-    if digits == "1" or any(phrase in speech.lower() for phrase in [
-        "tell me more", "interested", "yes", "sure", "go ahead"
-    ]):
-        if lead:
-            lead.status = "interested"
-            lead.updated_at = datetime.now()
-            db.commit()
+        if digits == "1" or any(phrase in speech.lower() for phrase in [
+            "tell me more", "interested", "yes", "sure", "go ahead"
+        ]):
+            try:
+                if lead:
+                    lead.status = "interested"
+                    lead.updated_at = datetime.now()
+                    db.commit()
+            except Exception as db_err:
+                logger.error(f"DB update error (interested) lead {lead_id}: {db_err}")
+            response_text = (
+                "Amazing — I love that! Here's what I want you to do. "
+                "Go to our website right now and take a look at what we offer — "
+                "it only takes two minutes and I think you'll be genuinely surprised. "
+                "Our team is going to follow up with you personally to make sure you get the best deal available. "
+                "Can I ask quickly — what's your biggest goal right now? Energy, wellness, or maybe even earning extra income?"
+            )
+            gather_url = f"{_base_url()}/webhooks/voice/gather2?lead_id={lead_id}"
+            return xml_response(build_response_twiml(response_text, gather_url))
+
+        # Handle speech with AI
         response_text = (
-            f"Amazing — I love that! Here's what I want you to do. "
-            f"Go to our website right now and take a look at what we offer — "
-            f"it only takes two minutes and I think you'll be genuinely surprised. "
-            f"Our team is going to follow up with you personally to make sure you get the best deal available. "
-            f"Can I ask quickly — what's your biggest goal right now? Energy, wellness, or maybe even earning extra income?"
+            "No problem at all! We have some amazing products that could really help you. "
+            "Check us out online and our team will follow up with you soon."
         )
+        if speech and lead:
+            try:
+                lead_context = {
+                    "health_interest": lead.health_interest or "general wellness",
+                    "pain_points": lead.pain_points or "",
+                }
+                response_text = handle_objection(speech, lead_context)
+                interaction = Interaction(
+                    lead_id=lead.id, type="call", direction="inbound",
+                    content=speech, outcome="speech_response",
+                )
+                db.add(interaction)
+                db.commit()
+            except Exception as ai_err:
+                logger.error(f"AI objection handler error lead {lead_id}: {ai_err}")
+
         gather_url = f"{_base_url()}/webhooks/voice/gather2?lead_id={lead_id}"
-        twiml = build_response_twiml(response_text, gather_url)
-        return xml_response(twiml)
+        return xml_response(build_response_twiml(response_text, gather_url))
 
-    # Handle speech objection with AI
-    if speech and lead:
-        lead_context = {
-            "health_interest": lead.health_interest or "general wellness",
-            "pain_points": lead.pain_points or "",
-        }
-        response_text = handle_objection(speech, lead_context)
-
-        # Log the speech input
-        interaction = Interaction(
-            lead_id=lead.id, type="call", direction="inbound",
-            content=speech, outcome="speech_response",
+    except Exception as e:
+        logger.error(f"voice_gather crash for lead {lead_id}: {e}")
+        from twilio.twiml.voice_response import VoiceResponse
+        r = VoiceResponse()
+        r.say(
+            "Thank you so much for your time! We'll be in touch soon with more information. Have a wonderful day!",
+            voice="Google.en-US-Neural2-F",
         )
-        db.add(interaction)
-        db.commit()
-    else:
-        response_text = (
-            "No problem at all! I'd love to send you some information about our natural health products. "
-            "What's the best way to reach you — text or email?"
-        )
-
-    gather_url = f"{_base_url()}/webhooks/voice/gather2?lead_id={lead_id}"
-    twiml = build_response_twiml(response_text, gather_url)
-    return xml_response(twiml)
+        r.hangup()
+        return xml_response(str(r))
 
 
 @router.post("/voice/gather2")
 async def voice_gather2(request: Request, lead_id: int, db: Session = Depends(get_db)):
     """Secondary gather — wrap up the call."""
-    form = await request.form()
-    speech = form.get("SpeechResult", "").strip()
+    try:
+        form = await request.form()
+        speech = form.get("SpeechResult", "") or ""
+        speech = speech.strip()
 
-    lead = db.query(Lead).filter(Lead.id == lead_id).first()
-    if lead and speech:
-        # Log and update pain points if we learned something
-        interaction = Interaction(
-            lead_id=lead.id, type="call", direction="inbound",
-            content=speech, outcome="discovery",
+        lead = db.query(Lead).filter(Lead.id == lead_id).first()
+        if lead and speech:
+            try:
+                interaction = Interaction(
+                    lead_id=lead.id, type="call", direction="inbound",
+                    content=speech, outcome="discovery",
+                )
+                db.add(interaction)
+                if not lead.pain_points:
+                    lead.pain_points = speech[:500]
+                db.commit()
+            except Exception as db_err:
+                logger.error(f"DB error in gather2 lead {lead_id}: {db_err}")
+
+        closing = (
+            "Perfect — that's exactly what we can help with! "
+            "I'm going to send you some information right now and our team will follow up with you very soon. "
+            "In the meantime, check out our website — the link will be in the message we send you. "
+            "Thank you so much for your time, and get ready — exciting things are coming your way!"
         )
-        db.add(interaction)
-        if not lead.pain_points:
-            lead.pain_points = speech[:500]
-        db.commit()
-
-    closing = (
-        "Perfect — that's exactly what we can help with! "
-        "I'm going to send you some information right now and our team will follow up with you very soon. "
-        "In the meantime, check out our website — the link will be in the message we send you. "
-        "Thank you so much for your time, and get ready — exciting things are coming your way!"
-    )
-    twiml = build_response_twiml(closing)
-    return xml_response(twiml)
+        return xml_response(build_response_twiml(closing))
+    except Exception as e:
+        logger.error(f"voice_gather2 crash for lead {lead_id}: {e}")
+        from twilio.twiml.voice_response import VoiceResponse
+        r = VoiceResponse()
+        r.say("Thank you for your time! We'll follow up with you soon.", voice="Google.en-US-Neural2-F")
+        r.hangup()
+        return xml_response(str(r))
 
 
 @router.post("/voice/amd")
