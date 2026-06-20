@@ -12,6 +12,7 @@ from database import get_db
 from models import Lead, Interaction
 from core.voice_caller import build_call_twiml, build_call_twiml_elevenlabs, build_voicemail_twiml, build_response_twiml
 from core.ai_engine import analyze_interaction, generate_cold_call_script, handle_objection
+from core.sms_sender import send_sms
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
@@ -89,7 +90,7 @@ async def voice_gather(request: Request, lead_id: int, db: Session = Depends(get
             return xml_response(build_response_twiml(response_text))
 
         if digits == "1" or any(phrase in speech.lower() for phrase in [
-            "tell me more", "interested", "yes", "sure", "go ahead"
+            "tell me more", "interested", "yes", "sure", "go ahead", "okay", "ok", "sounds good"
         ]):
             try:
                 if lead:
@@ -98,12 +99,25 @@ async def voice_gather(request: Request, lead_id: int, db: Session = Depends(get
                     db.commit()
             except Exception as db_err:
                 logger.error(f"DB update error (interested) lead {lead_id}: {db_err}")
+
+            # Fire SMS immediately with the website link
+            try:
+                if lead and lead.phone:
+                    from config import settings as _cfg
+                    sms_body = (
+                        f"Hi {lead.name or 'there'}! It's {_agent_name()} from {_company_name()}. "
+                        f"Here's the link I mentioned — check it out: {_cfg.SHOP_URL} "
+                        f"Our team will follow up with you soon. Reply STOP to unsubscribe."
+                    )
+                    send_sms(lead.phone, sms_body, lead_id=lead_id)
+            except Exception as sms_err:
+                logger.error(f"SMS send error for lead {lead_id}: {sms_err}")
+
             response_text = (
-                "Amazing — I love that! Here's what I want you to do. "
-                "Go to our website right now and take a look at what we offer — "
-                "it only takes two minutes and I think you'll be genuinely surprised. "
-                "Our team is going to follow up with you personally to make sure you get the best deal available. "
-                "Can I ask quickly — what's your biggest goal right now? Energy, wellness, or maybe even earning extra income?"
+                "Amazing — I just sent you a text message right now with the link to our website. "
+                "Check it out when you get a chance — it only takes two minutes and I think you'll love what you see. "
+                "Can I ask quickly — what's your biggest health goal right now? "
+                "Energy, weight, sleep, or maybe even earning some extra income from home?"
             )
             gather_url = f"{_base_url()}/webhooks/voice/gather2?lead_id={lead_id}"
             return xml_response(build_response_twiml(response_text, gather_url))
@@ -168,9 +182,10 @@ async def voice_gather2(request: Request, lead_id: int, db: Session = Depends(ge
 
         closing = (
             "Perfect — that's exactly what we can help with! "
-            "I'm going to send you some information right now and our team will follow up with you very soon. "
-            "In the meantime, check out our website — the link will be in the message we send you. "
-            "Thank you so much for your time, and get ready — exciting things are coming your way!"
+            "Check the text message I just sent you — the website link is right there. "
+            "Browse through and you'll see exactly what I mean. "
+            "Our team will personally follow up with you very soon to answer any questions. "
+            "Thank you so much — exciting things are coming your way!"
         )
         return xml_response(build_response_twiml(closing))
     except Exception as e:
