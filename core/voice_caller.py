@@ -60,22 +60,19 @@ def build_call_twiml(opening: str, gather_action_url: str) -> str:
         input="speech dtmf",
         action=gather_action_url,
         method="POST",
-        speech_timeout="3",
-        timeout=8,
+        speech_timeout="auto",
+        timeout=10,
         num_digits=1,
     )
     gather.say(opening, voice="Google.en-US-Neural2-F", language="en-US")
     gather.say(
-        "Press 1 to learn more, press 2 to be removed from our list, "
-        "or just speak your response.",
+        "Just say yes and I'll tell you more, or say no thanks if now isn't a good time.",
         voice="Google.en-US-Neural2-F",
     )
     response.append(gather)
 
-    # If no input captured, leave a brief message and hang up
     response.say(
-        "I didn't catch that — no problem at all! I'll follow up another time. "
-        "Have a wonderful and healthy day!",
+        "No worries at all! I'll reach out another time. Have a wonderful day!",
         voice="Google.en-US-Neural2-F",
     )
     response.hangup()
@@ -96,8 +93,7 @@ def build_call_twiml_elevenlabs(opening: str, gather_action_url: str, audio_url:
     )
     gather.play(audio_url)
     gather.say(
-        "Press 1 to learn more, press 2 to be removed from our list, "
-        "or just speak your response.",
+        "Just say yes and I'll tell you more, or say no thanks if now isn't a good time.",
         voice="Google.en-US-Neural2-F",
     )
     response.append(gather)

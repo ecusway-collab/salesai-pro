@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     SENDGRID_API_KEY: str = ""
     FROM_EMAIL: str = "noreply@getfreeproducts.net"
     FROM_NAME: str = "Primitive Solution"
+    REPLY_TO_EMAIL: str = ""
     GOOGLE_MAPS_API_KEY: str = ""
     BASE_URL: str = "http://localhost:8000"
     SECRET_KEY: str = "change-me"

@@ -1,7 +1,7 @@
 """SendGrid email — send personalized follow-up emails to leads."""
 import logging
 from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail, Email, To, Content
+from sendgrid.helpers.mail import Mail, Email, To, Content, ReplyTo
 from config import settings
 
 logger = logging.getLogger(__name__)
@@ -25,10 +25,12 @@ def send_email(
 
     sender_email = from_email_override or settings.FROM_EMAIL
     sender_name = from_name_override or settings.FROM_NAME
+    reply_to = settings.REPLY_TO_EMAIL or sender_email
+    contact_line = f"\n\nTo reply, email us at: {reply_to}" if reply_to != sender_email else ""
 
     unsubscribe_url = f"{settings.BASE_URL}/unsubscribe/{lead_id}" if lead_id else f"{settings.BASE_URL}/unsubscribe/0"
     unsubscribe_line = f"\n\n---\nTo unsubscribe from future emails, click here: {unsubscribe_url}"
-    full_body = body + unsubscribe_line
+    full_body = body + contact_line + unsubscribe_line
 
     html_body = full_body.replace("\n", "<br>")
     html_body += f'<br><br><hr><small><a href="{unsubscribe_url}" style="color:#999">Unsubscribe</a></small>'
@@ -38,6 +40,7 @@ def send_email(
         to_emails=To(to_email, to_name),
         subject=subject,
     )
+    message.reply_to = ReplyTo(reply_to, sender_name)
     message.content = [
         Content("text/plain", full_body),
         Content("text/html", f"<html><body>{html_body}</body></html>"),

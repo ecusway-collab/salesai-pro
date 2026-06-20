@@ -228,7 +228,7 @@ Return JSON:
                 f"Thank you for your time! I wanted to follow up and share more about how {settings.COMPANY_NAME} can help you.\n\n"
                 f"We offer solutions designed to support your goals — whether that's health, wellness, or building a better lifestyle.\n\n"
                 f"Visit us at {settings.SHOP_URL} to explore what we have available.\n\n"
-                f"Feel free to reply to this email with any questions — I'm happy to help.\n\n"
+                f"Have questions? Just reach out — I'm happy to help.\n\n"
                 f"Best,\n{settings.AGENT_NAME}\n{settings.COMPANY_NAME}"
             ),
         }
