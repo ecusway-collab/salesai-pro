@@ -411,6 +411,53 @@ async function loadPipeline() {
 
 // ── Campaigns ────────────────────────────────────────────────────────────────
 
+async function setupIgnytLaunch(btn) {
+  if (!confirm('This will create 2 Ignyt campaigns:\n\n1. Ignyt Pre-Launch — running now until July 4th\n2. Ignyt Freedom Run — Live (for July 4th onwards)\n\nAI will generate call scripts, SMS, and email templates for both. Continue?')) return;
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating campaigns & generating scripts...';
+
+  const campaigns = [
+    {
+      name: 'Ignyt Freedom Run — Pre-Launch',
+      company_brand: 'Ignyt',
+      shop_url_override: 'https://ignyt.biz/healme',
+      product_focus: 'Ignyt Metabolic Booster — natural energy and metabolism supplement launching July 4th',
+      target_audience: 'health-conscious entrepreneurs, network marketers, and wellness enthusiasts',
+      goal: 'Get leads to reserve their FREE spot at ignyt.biz/healme before the July 4th Freedom Run launch — the countdown is on, urgency is critical, deadline is July 4th',
+    },
+    {
+      name: 'Ignyt Freedom Run — Live July 4th',
+      company_brand: 'Ignyt',
+      shop_url_override: 'https://ignyt.biz/healme',
+      product_focus: 'Ignyt Metabolic Booster — now live, 50% instant payout available for distributors today',
+      target_audience: 'pre-launch leads who reserved spots plus new prospects wanting energy supplements and home income',
+      goal: 'Convert to buyers or distributors — Ignyt launched July 4th, 50% instant payout starts now, visit ignyt.biz/healme to join today',
+    },
+  ];
+
+  let created = 0;
+  for (const data of campaigns) {
+    try {
+      await apiFetch('/campaigns?auto_generate=true', { method: 'POST', body: JSON.stringify(data) });
+      created++;
+      showToast(`Campaign ${created}/2 created — generating AI scripts...`, 'info');
+    } catch (e) {
+      showToast(`Failed to create: ${data.name}`, 'danger');
+    }
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Done!';
+
+  if (created === 2) {
+    showToast('Both Ignyt campaigns created with AI scripts! Assign leads to "Pre-Launch" to start calling.', 'success');
+    document.getElementById('ignytSetupBanner')?.remove();
+  }
+  loadCampaigns();
+  loadCampaignDropdowns();
+}
+
 async function loadCampaigns() {
   try {
     campaigns = await apiFetch('/campaigns');
