@@ -101,26 +101,16 @@ def _run_scrape_job(job_id: int, user_id: int, source: str, query: str, location
     from models import User
     db = SessionLocal()
     try:
-        try:
-            raw_leads = scrape_google_maps(query, location, max_results) if source == "google_maps" else scrape_yellow_pages(query, location, max_results)
-        except RuntimeError as api_err:
-            if "GOOGLE_API_DISABLED" in str(api_err):
-                job = db.query(ScraperJob).filter(ScraperJob.id == job_id).first()
-                if job:
-                    job.status = "failed"
-                    job.leads_found = 0
-                    job.leads_imported = 0
-                    job.error_message = (
-                        "Google Maps API not enabled on your project. "
-                        "Go to console.cloud.google.com → APIs & Services → Enable APIs → "
-                        "search 'Places API (New)' → Enable it. Then re-run the search."
-                    )
-                    job.completed_at = datetime.now()
-                    db.commit()
-                db.close()
-                return
-            raise
+        raw_leads = scrape_google_maps(query, location, max_results) if source == "google_maps" else scrape_yellow_pages(query, location, max_results)
         job = db.query(ScraperJob).filter(ScraperJob.id == job_id).first()
+
+        # Detect if Google Maps job silently fell back to a different source
+        actual_sources = {ld.get("source") for ld in raw_leads}
+        if source == "google_maps" and actual_sources and "google_maps" not in actual_sources:
+            job.error_message = (
+                f"Note: Google Places API not enabled — used {', '.join(actual_sources)} instead. "
+                "To get better data, enable 'Places API (New)' at console.cloud.google.com"
+            )
 
         # Only count leads that have a phone number — no point importing ones you can't call
         callable_leads = [ld for ld in raw_leads if ld.get("phone")]
