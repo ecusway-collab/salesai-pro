@@ -64,6 +64,9 @@ body { background: #f0f4f1; font-family: 'Segoe UI', sans-serif; }
 .bulk-query-list { font-size: .9rem; }
 .bulk-info-box { background: #fff8e1; font-size: .8rem; }
 .bulk-hint { font-size: .75rem; }
+.bulk-section-label { font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; }
+.bulk-section-label-top { margin-top: 4px; }
+.bulk-section-label-gap { margin-top: 8px; }
 </style>
 </head>
 <body>
@@ -407,6 +410,7 @@ Calgary, AB, Canada</textarea>
             <div class="col-lg-4">
               <label class="form-label fw-semibold">Business Types <small class="text-muted">(tick what to search)</small></label>
               <div id="bulkQueryList" class="d-flex flex-column gap-1 bulk-query-list">
+                <div class="text-muted fw-semibold bulk-section-label bulk-section-label-top">Health &amp; Wellness</div>
                 <label class="d-flex align-items-center gap-2"><input type="checkbox" class="bulk-query" value="gyms and fitness centers" checked> Gyms &amp; Fitness Centers</label>
                 <label class="d-flex align-items-center gap-2"><input type="checkbox" class="bulk-query" value="personal trainers" checked> Personal Trainers</label>
                 <label class="d-flex align-items-center gap-2"><input type="checkbox" class="bulk-query" value="health food stores" checked> Health Food Stores</label>
@@ -415,7 +419,15 @@ Calgary, AB, Canada</textarea>
                 <label class="d-flex align-items-center gap-2"><input type="checkbox" class="bulk-query" value="supplement stores"> Supplement Stores</label>
                 <label class="d-flex align-items-center gap-2"><input type="checkbox" class="bulk-query" value="chiropractors"> Chiropractors</label>
                 <label class="d-flex align-items-center gap-2"><input type="checkbox" class="bulk-query" value="nutritionists and dietitians"> Nutritionists &amp; Dietitians</label>
-                <label class="d-flex align-items-center gap-2"><input type="checkbox" class="bulk-query" value="network marketing businesses"> Network Marketing Businesses</label>
+                <div class="text-muted fw-semibold bulk-section-label bulk-section-label-gap">Network Marketers &amp; Entrepreneurs</div>
+                <label class="d-flex align-items-center gap-2"><input type="checkbox" class="bulk-query" value="network marketing consultants" checked> Network Marketing Consultants</label>
+                <label class="d-flex align-items-center gap-2"><input type="checkbox" class="bulk-query" value="MLM distributors" checked> MLM Distributors</label>
+                <label class="d-flex align-items-center gap-2"><input type="checkbox" class="bulk-query" value="direct sales consultants" checked> Direct Sales Consultants</label>
+                <label class="d-flex align-items-center gap-2"><input type="checkbox" class="bulk-query" value="home based business consultants" checked> Home Based Business</label>
+                <label class="d-flex align-items-center gap-2"><input type="checkbox" class="bulk-query" value="independent health product distributors"> Independent Health Distributors</label>
+                <label class="d-flex align-items-center gap-2"><input type="checkbox" class="bulk-query" value="life coaches"> Life Coaches</label>
+                <label class="d-flex align-items-center gap-2"><input type="checkbox" class="bulk-query" value="business opportunity consultants"> Business Opportunity Consultants</label>
+                <label class="d-flex align-items-center gap-2"><input type="checkbox" class="bulk-query" value="entrepreneurship coaches"> Entrepreneurship Coaches</label>
               </div>
             </div>
             <div class="col-lg-3">
