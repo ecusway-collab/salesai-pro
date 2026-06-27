@@ -21,30 +21,12 @@ def scrape_yellow_pages(query: str, location: str, max_results: int = 50) -> Lis
 
 
 def _scrape_yp(query: str, location: str, max_results: int) -> List[Dict]:
-    """Scrape Yellow Pages with realistic browser headers."""
+    """Scrape Yellow Pages using Chrome TLS impersonation to bypass bot detection."""
     try:
-        import requests
+        from curl_cffi import requests as cf_requests
         from bs4 import BeautifulSoup
     except ImportError:
         return []
-
-    session = requests.Session()
-    session.headers.update({
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/124.0.0.0 Safari/537.36"
-        ),
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.9",
-        "Accept-Encoding": "gzip, deflate, br",
-        "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1",
-        "Sec-Fetch-Dest": "document",
-        "Sec-Fetch-Mode": "navigate",
-        "Sec-Fetch-Site": "none",
-        "Referer": "https://www.google.com/",
-    })
 
     leads = []
     page = 1
@@ -57,7 +39,7 @@ def _scrape_yp(query: str, location: str, max_results: int) -> List[Dict]:
             f"&page={page}"
         )
         try:
-            resp = session.get(url, timeout=20)
+            resp = cf_requests.get(url, impersonate="chrome124", timeout=20)
             if resp.status_code in (403, 429):
                 logger.warning(f"Yellow Pages blocked (HTTP {resp.status_code})")
                 return leads
