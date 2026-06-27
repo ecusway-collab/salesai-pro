@@ -615,9 +615,10 @@ async function loadScraperJobs() {
   try {
     const jobs = await apiFetch('/scraper/jobs');
     const tb = document.getElementById('scraperJobs');
-    if (!jobs.length) { tb.innerHTML = '<tr><td colspan="7" class="text-center py-3 text-muted">No searches yet — use Bulk Search above to get started</td></tr>'; return; }
+    if (!jobs.length) { tb.innerHTML = '<tr><td colspan="8" class="text-center py-3 text-muted">No searches yet — use Bulk Search above to get started</td></tr>'; return; }
     tb.innerHTML = jobs.map(j => `
       <tr>
+        <td onclick="event.stopPropagation()"><input type="checkbox" class="job-checkbox" value="${j.id}" onchange="updateJobSelection()"></td>
         <td>${j.query}</td>
         <td>${j.location}</td>
         <td><span class="badge bg-secondary">${j.source}</span></td>
@@ -625,15 +626,42 @@ async function loadScraperJobs() {
         <td class="fw-semibold text-success">${j.leads_imported ?? 0}</td>
         <td>
           <span class="badge bg-${j.status === 'completed' ? 'success' : j.status === 'failed' ? 'danger' : 'warning'}">${j.status}</span>
-          ${j.error_message ? `<div class="small text-muted mt-1" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${j.error_message}">${j.error_message}</div>` : ''}
+          ${j.error_message ? `<div class="small text-muted mt-1" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${j.error_message}">${j.error_message}</div>` : ''}
         </td>
         <td>
-          <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteJob(${j.id})" title="Delete this job and its imported leads">
-            <i class="bi bi-trash"></i>
-          </button>
+          <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteJob(${j.id})" title="Delete this job and its imported leads"><i class="bi bi-trash"></i></button>
         </td>
       </tr>`).join('');
   } catch (e) { /* handled */ }
+}
+
+function toggleSelectAllJobs(cb) {
+  document.querySelectorAll('.job-checkbox').forEach(c => c.checked = cb.checked);
+  updateJobSelection();
+}
+
+function updateJobSelection() {
+  const selected = document.querySelectorAll('.job-checkbox:checked');
+  const count = selected.length;
+  const countEl = document.getElementById('jobSelectedCount');
+  const btnEl = document.getElementById('deleteSelectedJobsBtn');
+  const allCb = document.getElementById('jobSelectAll');
+  if (countEl) { countEl.style.display = count ? '' : 'none'; countEl.textContent = count + ' selected'; }
+  if (btnEl) btnEl.style.display = count ? '' : 'none';
+  if (allCb) allCb.indeterminate = count > 0 && count < document.querySelectorAll('.job-checkbox').length;
+}
+
+async function deleteSelectedJobs() {
+  const ids = [...document.querySelectorAll('.job-checkbox:checked')].map(c => parseInt(c.value));
+  if (!ids.length) return;
+  if (!confirm(`Delete ${ids.length} search job(s) and their imported leads? This cannot be undone.`)) return;
+  let done = 0;
+  for (const id of ids) {
+    try { await apiFetch(`/scraper/jobs/${id}`, { method: 'DELETE' }); done++; } catch (e) {}
+  }
+  showToast(`${done} job(s) deleted.`, 'success');
+  loadScraperJobs();
+  loadLeads();
 }
 
 async function deleteJob(jobId) {
@@ -643,15 +671,6 @@ async function deleteJob(jobId) {
     showToast(`Job removed. ${r.leads_deleted} leads deleted.`, 'success');
     loadScraperJobs();
     loadLeads();
-  } catch (e) { /* handled */ }
-}
-
-async function clearAllHistory() {
-  if (!confirm('Clear all search history? (Leads are kept.)')) return;
-  try {
-    await apiFetch('/scraper/jobs', { method: 'DELETE' });
-    showToast('Search history cleared.', 'success');
-    loadScraperJobs();
   } catch (e) { /* handled */ }
 }
 

@@ -490,17 +490,18 @@ Calgary, AB, Canada</textarea>
       </div>
       <div class="col-lg-7">
         <div class="card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <span>Search History</span>
-            <div class="d-flex gap-2">
-              <button type="button" class="btn btn-sm btn-outline-secondary" onclick="loadScraperJobs()" title="Refresh"><i class="bi bi-arrow-clockwise"></i></button>
-              <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearAllHistory()">Clear All History</button>
+          <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2">
+              <span>Search History</span>
+              <span id="jobSelectedCount" class="badge bg-primary" style="display:none">0 selected</span>
+              <button type="button" id="deleteSelectedJobsBtn" class="btn btn-sm btn-danger" style="display:none" onclick="deleteSelectedJobs()"><i class="bi bi-trash me-1"></i>Delete Selected</button>
             </div>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="loadScraperJobs()" title="Refresh"><i class="bi bi-arrow-clockwise"></i></button>
           </div>
           <div class="card-body p-0">
             <table class="table table-hover mb-0">
-              <thead><tr><th>Query</th><th>Location</th><th>Source</th><th>Found</th><th>Imported</th><th>Status</th><th></th></tr></thead>
-              <tbody id="scraperJobs"><tr><td colspan="7" class="text-center py-3 text-muted">No searches yet — use Bulk Search above to get started</td></tr></tbody>
+              <thead><tr><th><input type="checkbox" id="jobSelectAll" onchange="toggleSelectAllJobs(this)"></th><th>Query</th><th>Location</th><th>Source</th><th>Found</th><th>Imported</th><th>Status</th><th></th></tr></thead>
+              <tbody id="scraperJobs"><tr><td colspan="8" class="text-center py-3 text-muted">No searches yet — use Bulk Search above to get started</td></tr></tbody>
             </table>
           </div>
         </div>
