@@ -224,6 +224,7 @@ body { background: #f0f4f1; font-family: 'Segoe UI', sans-serif; }
           <span id="selectedCount" class="badge bg-primary" style="display:none">0 selected</span>
           <button id="callListBtn" class="btn btn-sm btn-success" style="display:none" onclick="startCallList()"><i class="bi bi-telephone-fill me-1"></i>Call All Selected</button>
           <button id="deleteSelectedBtn" class="btn btn-sm btn-danger" style="display:none" onclick="deleteSelected()"><i class="bi bi-trash me-1"></i>Delete Selected</button>
+          <button class="btn btn-sm btn-outline-danger" onclick="deleteAllLeads()" title="Delete every lead in your account"><i class="bi bi-trash3 me-1"></i>Delete All</button>
         </div>
         <div class="d-flex gap-2 flex-wrap">
           <input class="form-control form-control-sm" style="width:200px" placeholder="Search..." id="leadSearch" oninput="filterLeads()">
@@ -495,8 +496,8 @@ Calgary, AB, Canada</textarea>
           </div>
           <div class="card-body p-0">
             <table class="table table-hover mb-0">
-              <thead><tr><th>Query</th><th>Location</th><th>Source</th><th>Found</th><th>Imported</th><th>Status</th></tr></thead>
-              <tbody id="scraperJobs"><tr><td colspan="6" class="text-center py-3 text-muted">No searches yet — use Bulk Search above to get started</td></tr></tbody>
+              <thead><tr><th>Query</th><th>Location</th><th>Source</th><th>Found</th><th>Imported</th><th>Status</th><th></th></tr></thead>
+              <tbody id="scraperJobs"><tr><td colspan="7" class="text-center py-3 text-muted">No searches yet — use Bulk Search above to get started</td></tr></tbody>
             </table>
           </div>
         </div>

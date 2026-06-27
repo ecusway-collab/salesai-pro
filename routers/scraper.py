@@ -48,6 +48,22 @@ def get_job(job_id: int, current_user=Depends(get_active_user), db: Session = De
     return job
 
 
+@router.delete("/jobs/{job_id}/leads", status_code=200)
+def delete_job_leads(job_id: int, current_user=Depends(get_active_user), db: Session = Depends(get_db)):
+    """Delete all leads that were imported during a specific scraper job's time window."""
+    job = db.query(ScraperJob).filter(ScraperJob.id == job_id, ScraperJob.user_id == current_user.id).first()
+    if not job:
+        raise HTTPException(404, "Job not found")
+    end_time = job.completed_at or datetime.now()
+    deleted = db.query(Lead).filter(
+        Lead.user_id == current_user.id,
+        Lead.created_at >= job.created_at,
+        Lead.created_at <= end_time,
+    ).delete()
+    db.commit()
+    return {"deleted": deleted}
+
+
 @router.get("/dashboard-stats")
 def dashboard_stats(current_user=Depends(get_active_user), db: Session = Depends(get_db)):
     today = date.today()

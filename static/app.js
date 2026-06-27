@@ -615,7 +615,7 @@ async function loadScraperJobs() {
   try {
     const jobs = await apiFetch('/scraper/jobs');
     const tb = document.getElementById('scraperJobs');
-    if (!jobs.length) { tb.innerHTML = '<tr><td colspan="6" class="text-center py-3 text-muted">No jobs yet</td></tr>'; return; }
+    if (!jobs.length) { tb.innerHTML = '<tr><td colspan="7" class="text-center py-3 text-muted">No jobs yet</td></tr>'; return; }
     tb.innerHTML = jobs.map(j => `
       <tr>
         <td>${j.query}</td>
@@ -623,8 +623,32 @@ async function loadScraperJobs() {
         <td><span class="badge bg-secondary">${j.source}</span></td>
         <td>${j.leads_found}</td>
         <td class="fw-semibold text-success">${j.leads_imported}</td>
-        <td><span class="badge bg-${j.status === 'completed' ? 'success' : j.status === 'failed' ? 'danger' : 'warning'}">${j.status}</span></td>
+        <td>
+          <span class="badge bg-${j.status === 'completed' ? 'success' : j.status === 'failed' ? 'danger' : 'warning'}">${j.status}</span>
+          ${j.error_message ? `<div class="small text-muted mt-1" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${j.error_message}">${j.error_message}</div>` : ''}
+        </td>
+        <td>
+          ${j.leads_imported > 0 ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteJobLeads(${j.id}, ${j.leads_imported})" title="Delete the ${j.leads_imported} leads imported by this job"><i class="bi bi-trash"></i> Delete Leads</button>` : ''}
+        </td>
       </tr>`).join('');
+  } catch (e) { /* handled */ }
+}
+
+async function deleteJobLeads(jobId, count) {
+  if (!confirm(`Delete the ${count} leads imported by this search job? This cannot be undone.`)) return;
+  try {
+    const r = await apiFetch(`/scraper/jobs/${jobId}/leads`, { method: 'DELETE' });
+    showToast(`${r.deleted} leads deleted.`, 'success');
+    loadLeads();
+  } catch (e) { /* handled */ }
+}
+
+async function deleteAllLeads() {
+  if (!confirm('Delete ALL leads in your account? This cannot be undone.')) return;
+  try {
+    const r = await apiFetch('/leads', { method: 'DELETE' });
+    showToast(`${r.deleted} leads deleted.`, 'success');
+    loadLeads();
   } catch (e) { /* handled */ }
 }
 

@@ -88,6 +88,14 @@ def delete_lead(lead_id: int, current_user=Depends(get_active_user), db: Session
     db.commit()
 
 
+@router.delete("", status_code=200)
+def delete_all_leads(current_user=Depends(get_active_user), db: Session = Depends(get_db)):
+    """Delete every lead belonging to the current user."""
+    deleted = db.query(Lead).filter(Lead.user_id == current_user.id).delete()
+    db.commit()
+    return {"deleted": deleted}
+
+
 @router.get("/{lead_id}/interactions", response_model=List[InteractionOut])
 def get_interactions(lead_id: int, current_user=Depends(get_active_user), db: Session = Depends(get_db)):
     lead = db.query(Lead).filter(Lead.id == lead_id, Lead.user_id == current_user.id).first()
