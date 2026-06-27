@@ -38,6 +38,7 @@ body { background: #f0f4f1; font-family: 'Segoe UI', sans-serif; }
 .card-header { background: #fff; border-bottom: 1px solid #e9ecef; border-radius: 12px 12px 0 0 !important; font-weight: 600; padding: 14px 20px; }
 .page { display: none; }
 .page.active { display: block; }
+.badge-incomplete { background: #fef9c3; color: #854d0e; }
 .badge-new { background: #dbeafe; color: #1d4ed8; }
 .badge-contacted { background: #fef3c7; color: #92400e; }
 .badge-interested { background: #d1fae5; color: #065f46; }
@@ -230,7 +231,7 @@ body { background: #f0f4f1; font-family: 'Segoe UI', sans-serif; }
           <input class="form-control form-control-sm" style="width:200px" placeholder="Search..." id="leadSearch" oninput="filterLeads()">
           <select class="form-select form-select-sm" style="width:140px" id="statusFilter" onchange="filterLeads()">
             <option value="">All Statuses</option>
-            <option>new</option><option>contacted</option><option>interested</option>
+            <option>incomplete</option><option>new</option><option>contacted</option><option>interested</option>
             <option>qualified</option><option>proposal</option><option>won</option><option>lost</option>
           </select>
           <button class="btn btn-sm btn-green" data-bs-toggle="modal" data-bs-target="#addLeadModal"><i class="bi bi-plus-lg me-1"></i>Add Lead</button>

@@ -153,8 +153,8 @@ def _run_scrape_job(job_id: int, user_id: int, source: str, query: str, location
                     "Add your Yelp API key in Settings for better data, or enable Google Places API."
                 )
 
-        # Only count leads that have a phone number — no point importing ones you can't call
-        callable_leads = [ld for ld in raw_leads if ld.get("phone")]
+        # Import all leads — ones without phones get status "incomplete" so they're visible
+        callable_leads = raw_leads
         job.leads_found = len(callable_leads)
 
         plan_limit = user.leads_limit() if user else -1
@@ -170,13 +170,17 @@ def _run_scrape_job(job_id: int, user_id: int, source: str, query: str, location
                     break
 
             # Skip duplicates (match by phone first, then company name)
-            existing = db.query(Lead).filter(Lead.phone == ld["phone"], Lead.user_id == user_id).first()
+            if ld.get("phone"):
+                existing = db.query(Lead).filter(Lead.phone == ld["phone"], Lead.user_id == user_id).first()
+            else:
+                existing = None
             if not existing and ld.get("company"):
                 existing = db.query(Lead).filter(Lead.company == ld["company"], Lead.user_id == user_id).first()
             if existing:
                 continue
 
-            lead = Lead(**{k: v for k, v in ld.items() if hasattr(Lead, k) and k != "id"}, user_id=user_id, campaign_id=campaign_id, score=_score_lead(ld))
+            status = "new" if ld.get("phone") else "incomplete"
+            lead = Lead(**{k: v for k, v in ld.items() if hasattr(Lead, k) and k != "id"}, user_id=user_id, campaign_id=campaign_id, score=_score_lead(ld), status=status)
             db.add(lead)
             db.flush()
             schedule_followup_sequence(lead.id)
