@@ -83,6 +83,19 @@ def dashboard_stats(current_user=Depends(get_active_user), db: Session = Depends
     }
 
 
+def _score_lead(ld: dict) -> float:
+    score = 0
+    if ld.get("phone"):          score += 25
+    if ld.get("email"):          score += 20
+    if ld.get("address"):        score += 15
+    if ld.get("health_interest"): score += 15
+    if ld.get("company"):        score += 10
+    if ld.get("notes") and "Website:" in ld.get("notes", "") and "N/A" not in ld.get("notes", ""):
+        score += 10
+    source_bonus = {"google_maps": 5, "yellow_pages": 3}.get(ld.get("source", ""), 0)
+    return min(float(score + source_bonus), 100.0)
+
+
 def _run_scrape_job(job_id: int, user_id: int, source: str, query: str, location: str, max_results: int, campaign_id):
     from database import SessionLocal
     from models import User
@@ -116,7 +129,7 @@ def _run_scrape_job(job_id: int, user_id: int, source: str, query: str, location
             if existing:
                 continue
 
-            lead = Lead(**{k: v for k, v in ld.items() if hasattr(Lead, k) and k != "id"}, user_id=user_id, campaign_id=campaign_id)
+            lead = Lead(**{k: v for k, v in ld.items() if hasattr(Lead, k) and k != "id"}, user_id=user_id, campaign_id=campaign_id, score=_score_lead(ld))
             db.add(lead)
             db.flush()
             schedule_followup_sequence(lead.id)

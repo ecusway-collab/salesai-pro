@@ -144,8 +144,11 @@ def scrape_openstreetmap(query: str, location: str, max_results: int = 50) -> Li
         logger.error(f"Geocoding failed: {e}")
         return []
 
-    # Step 2: map query to OSM tags
+    # Step 2: map query to OSM tags — empty list means no OSM data for this query type
     osm_tags = _query_to_osm_tags(query)
+    if not osm_tags:
+        logger.info(f"No OSM tags for query '{query}' — skipping OpenStreetMap lookup")
+        return []
 
     # Step 3: Overpass API query
     leads = []
@@ -213,6 +216,13 @@ out body;
 def _query_to_osm_tags(query: str) -> List[str]:
     """Map a search query to OpenStreetMap tags."""
     q = query.lower()
+
+    # Individual/freelance roles have no physical OSM listing — don't guess wrong data
+    _no_osm = ["mlm", "network marketing", "direct sales", "home based", "distributor",
+               "life coach", "business opportunity", "entrepreneurship", "entrepreneur"]
+    if any(k in q for k in _no_osm):
+        return []
+
     mappings = {
         "gym": ['"leisure"="fitness_centre"', '"leisure"="sports_centre"'],
         "fitness": ['"leisure"="fitness_centre"', '"sport"="fitness"'],
