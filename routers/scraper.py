@@ -48,18 +48,27 @@ def get_job(job_id: int, current_user=Depends(get_active_user), db: Session = De
     return job
 
 
-@router.delete("/jobs/{job_id}/leads", status_code=200)
-def delete_job_leads(job_id: int, current_user=Depends(get_active_user), db: Session = Depends(get_db)):
-    """Delete all leads that were imported during a specific scraper job's time window."""
+@router.delete("/jobs/{job_id}", status_code=200)
+def delete_job(job_id: int, current_user=Depends(get_active_user), db: Session = Depends(get_db)):
+    """Delete a scraper job record AND any leads imported during its time window."""
     job = db.query(ScraperJob).filter(ScraperJob.id == job_id, ScraperJob.user_id == current_user.id).first()
     if not job:
         raise HTTPException(404, "Job not found")
     end_time = job.completed_at or datetime.now()
-    deleted = db.query(Lead).filter(
+    leads_deleted = db.query(Lead).filter(
         Lead.user_id == current_user.id,
         Lead.created_at >= job.created_at,
         Lead.created_at <= end_time,
     ).delete()
+    db.delete(job)
+    db.commit()
+    return {"leads_deleted": leads_deleted}
+
+
+@router.delete("/jobs", status_code=200)
+def delete_all_jobs(current_user=Depends(get_active_user), db: Session = Depends(get_db)):
+    """Delete all scraper job history for the current user (does not delete leads)."""
+    deleted = db.query(ScraperJob).filter(ScraperJob.user_id == current_user.id).delete()
     db.commit()
     return {"deleted": deleted}
 

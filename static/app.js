@@ -615,31 +615,43 @@ async function loadScraperJobs() {
   try {
     const jobs = await apiFetch('/scraper/jobs');
     const tb = document.getElementById('scraperJobs');
-    if (!jobs.length) { tb.innerHTML = '<tr><td colspan="7" class="text-center py-3 text-muted">No jobs yet</td></tr>'; return; }
+    if (!jobs.length) { tb.innerHTML = '<tr><td colspan="7" class="text-center py-3 text-muted">No searches yet — use Bulk Search above to get started</td></tr>'; return; }
     tb.innerHTML = jobs.map(j => `
       <tr>
         <td>${j.query}</td>
         <td>${j.location}</td>
         <td><span class="badge bg-secondary">${j.source}</span></td>
-        <td>${j.leads_found}</td>
-        <td class="fw-semibold text-success">${j.leads_imported}</td>
+        <td>${j.leads_found ?? 0}</td>
+        <td class="fw-semibold text-success">${j.leads_imported ?? 0}</td>
         <td>
           <span class="badge bg-${j.status === 'completed' ? 'success' : j.status === 'failed' ? 'danger' : 'warning'}">${j.status}</span>
-          ${j.error_message ? `<div class="small text-muted mt-1" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${j.error_message}">${j.error_message}</div>` : ''}
+          ${j.error_message ? `<div class="small text-muted mt-1" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${j.error_message}">${j.error_message}</div>` : ''}
         </td>
         <td>
-          ${j.leads_imported > 0 ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteJobLeads(${j.id}, ${j.leads_imported})" title="Delete the ${j.leads_imported} leads imported by this job"><i class="bi bi-trash"></i> Delete Leads</button>` : ''}
+          <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteJob(${j.id})" title="Delete this job and its imported leads">
+            <i class="bi bi-trash"></i>
+          </button>
         </td>
       </tr>`).join('');
   } catch (e) { /* handled */ }
 }
 
-async function deleteJobLeads(jobId, count) {
-  if (!confirm(`Delete the ${count} leads imported by this search job? This cannot be undone.`)) return;
+async function deleteJob(jobId) {
+  if (!confirm('Delete this search job and remove the leads it imported? This cannot be undone.')) return;
   try {
-    const r = await apiFetch(`/scraper/jobs/${jobId}/leads`, { method: 'DELETE' });
-    showToast(`${r.deleted} leads deleted.`, 'success');
+    const r = await apiFetch(`/scraper/jobs/${jobId}`, { method: 'DELETE' });
+    showToast(`Job removed. ${r.leads_deleted} leads deleted.`, 'success');
+    loadScraperJobs();
     loadLeads();
+  } catch (e) { /* handled */ }
+}
+
+async function clearAllHistory() {
+  if (!confirm('Clear all search history? (Leads are kept.)')) return;
+  try {
+    await apiFetch('/scraper/jobs', { method: 'DELETE' });
+    showToast('Search history cleared.', 'success');
+    loadScraperJobs();
   } catch (e) { /* handled */ }
 }
 
