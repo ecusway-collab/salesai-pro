@@ -75,8 +75,9 @@ def import_csv(file_content: bytes, default_campaign_id: int = None) -> Tuple[Li
                 "campaign_id": default_campaign_id,
             }
 
-            if not lead["phone"] and not lead["email"]:
-                errors.append(f"Row {idx + 2}: '{name}' has no phone or email — imported anyway")
+            if not lead["phone"]:
+                errors.append(f"Row {idx + 2}: '{name}' skipped — no phone number")
+                continue
 
             leads.append(lead)
         except Exception as e:

@@ -722,7 +722,8 @@ async function startBulkSearch() {
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Queueing searches...';
 
-  let queued = 0, failed = 0;
+  let queued = 0, limitHit = false;
+  outer:
   for (const city of cities) {
     for (const query of queries) {
       try {
@@ -731,14 +732,24 @@ async function startBulkSearch() {
           body: JSON.stringify({ source: 'google_maps', query, location: city, max_results: maxResults, campaign_id: campaignId || null }),
         });
         queued++;
-      } catch (e) { failed++; }
+      } catch (e) {
+        if (e.message && e.message.toLowerCase().includes('limit')) {
+          limitHit = true;
+          break outer;
+        }
+      }
       await new Promise(r => setTimeout(r, 400));
     }
   }
 
   btn.disabled = false;
   btn.innerHTML = '<i class="bi bi-lightning-fill me-2"></i>Start All Searches';
-  showToast(`${queued} searches started${failed ? `, ${failed} failed` : ''}. Watch the Search History below.`, queued > 0 ? 'success' : 'danger');
+
+  if (limitHit) {
+    showToast(`${queued} searches started, then stopped — lead limit reached. Upgrade your plan for more leads.`, 'warning');
+  } else {
+    showToast(`${queued} searches started. Watch the Search History below.`, 'success');
+  }
   loadScraperJobs();
   setTimeout(loadScraperJobs, 5000);
   setTimeout(loadScraperJobs, 15000);

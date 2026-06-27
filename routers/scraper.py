@@ -85,27 +85,47 @@ def dashboard_stats(current_user=Depends(get_active_user), db: Session = Depends
 
 def _run_scrape_job(job_id: int, user_id: int, source: str, query: str, location: str, max_results: int, campaign_id):
     from database import SessionLocal
+    from models import User
     db = SessionLocal()
     try:
         raw_leads = scrape_google_maps(query, location, max_results) if source == "google_maps" else scrape_yellow_pages(query, location, max_results)
         job = db.query(ScraperJob).filter(ScraperJob.id == job_id).first()
-        job.leads_found = len(raw_leads)
+
+        # Only count leads that have a phone number — no point importing ones you can't call
+        callable_leads = [ld for ld in raw_leads if ld.get("phone")]
+        job.leads_found = len(callable_leads)
+
+        # Check how many slots remain on this user's plan
+        user = db.query(User).filter(User.id == user_id).first()
+        plan_limit = user.leads_limit() if user else -1
+
         imported = 0
-        for ld in raw_leads:
-            existing = None
-            if ld.get("phone"):
-                existing = db.query(Lead).filter(Lead.phone == ld["phone"], Lead.user_id == user_id).first()
+        limit_hit = False
+        for ld in callable_leads:
+            # Stop importing if plan limit is reached
+            if plan_limit != -1:
+                current_count = db.query(Lead).filter(Lead.user_id == user_id).count()
+                if current_count >= plan_limit:
+                    limit_hit = True
+                    break
+
+            # Skip duplicates (match by phone first, then company name)
+            existing = db.query(Lead).filter(Lead.phone == ld["phone"], Lead.user_id == user_id).first()
             if not existing and ld.get("company"):
                 existing = db.query(Lead).filter(Lead.company == ld["company"], Lead.user_id == user_id).first()
             if existing:
                 continue
+
             lead = Lead(**{k: v for k, v in ld.items() if hasattr(Lead, k) and k != "id"}, user_id=user_id, campaign_id=campaign_id)
             db.add(lead)
             db.flush()
             schedule_followup_sequence(lead.id)
             imported += 1
+
         job.leads_imported = imported
         job.status = "completed"
+        if limit_hit:
+            job.error_message = f"Plan limit reached — upgrade for more leads"
         job.completed_at = datetime.now()
         db.commit()
     except Exception as e:
