@@ -738,6 +738,7 @@ async function checkSettings() {
   setBadge('badge-sendgrid', currentUser.has_sendgrid);
   setBadge('badge-gmaps', currentUser.has_google_maps);
   setBadge('badge-elevenlabs', currentUser.has_elevenlabs);
+  setBadge('badge-yelp', currentUser.has_yelp);
 
   // Show subscription info
   const planNames = { starter: 'Starter — $49/mo', pro: 'Pro — $99/mo', agency: 'Agency — $199/mo' };
@@ -760,6 +761,7 @@ async function saveCredentials() {
     'cred-twilio-phone': 'twilio_phone_number',
     'cred-sendgrid': 'sendgrid_api_key',
     'cred-gmaps': 'google_maps_api_key',
+    'cred-yelp': 'yelp_api_key',
     'cred-elevenlabs': 'elevenlabs_api_key',
     'cred-company': 'company_name',
     'cred-agent': 'agent_name',

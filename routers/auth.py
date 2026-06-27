@@ -38,6 +38,7 @@ class CredentialsUpdate(BaseModel):
     sendgrid_api_key: Optional[str] = None
     google_maps_api_key: Optional[str] = None
     elevenlabs_api_key: Optional[str] = None
+    yelp_api_key: Optional[str] = None
     company_name: Optional[str] = None
     agent_name: Optional[str] = None
     shop_url: Optional[str] = None
@@ -148,6 +149,7 @@ def _user_dict(user: User) -> dict:
         "has_sendgrid": bool(user.sendgrid_api_key),
         "has_google_maps": bool(user.google_maps_api_key),
         "has_elevenlabs": bool(user.elevenlabs_api_key),
+        "has_yelp": bool(user.yelp_api_key),
         "leads_limit": user.leads_limit(),
         "calls_limit": user.calls_limit(),
         "created_at": str(user.created_at)[:10] if user.created_at else None,

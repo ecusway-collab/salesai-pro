@@ -27,6 +27,8 @@ services:
         value: Vital Health Global
       - key: GOOGLE_MAPS_API_KEY
         sync: false
+      - key: YELP_API_KEY
+        sync: false
       - key: BASE_URL
         value: https://getfreeproducts.net
       - key: SECRET_KEY

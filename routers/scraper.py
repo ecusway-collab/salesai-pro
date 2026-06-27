@@ -126,23 +126,37 @@ def _run_scrape_job(job_id: int, user_id: int, source: str, query: str, location
     from models import User
     db = SessionLocal()
     try:
+        user = db.query(User).filter(User.id == user_id).first()
+
+        # Inject user's own API keys into settings so the scrapers pick them up
+        from config import settings as _cfg
+        import os
+        if user and user.google_maps_api_key:
+            os.environ["GOOGLE_MAPS_API_KEY"] = user.google_maps_api_key
+            _cfg.__class__.__fields__  # force re-read handled by direct override below
+        effective_yelp_key = (user.yelp_api_key if user and user.yelp_api_key else None) or _cfg.YELP_API_KEY
+        if effective_yelp_key:
+            os.environ["YELP_API_KEY"] = effective_yelp_key
+
         raw_leads = scrape_google_maps(query, location, max_results) if source == "google_maps" else scrape_yellow_pages(query, location, max_results)
         job = db.query(ScraperJob).filter(ScraperJob.id == job_id).first()
 
         # Detect if Google Maps job silently fell back to a different source
         actual_sources = {ld.get("source") for ld in raw_leads}
         if source == "google_maps" and actual_sources and "google_maps" not in actual_sources:
-            job.error_message = (
-                f"Note: Google Places API not enabled — used {', '.join(actual_sources)} instead. "
-                "To get better data, enable 'Places API (New)' at console.cloud.google.com"
-            )
+            used = ", ".join(actual_sources)
+            if "yelp" in actual_sources:
+                job.error_message = f"Note: Used Yelp as data source (Google Places API not enabled)."
+            else:
+                job.error_message = (
+                    f"Note: Google Places API not enabled — used {used}. "
+                    "Add your Yelp API key in Settings for better data, or enable Google Places API."
+                )
 
         # Only count leads that have a phone number — no point importing ones you can't call
         callable_leads = [ld for ld in raw_leads if ld.get("phone")]
         job.leads_found = len(callable_leads)
 
-        # Check how many slots remain on this user's plan
-        user = db.query(User).filter(User.id == user_id).first()
         plan_limit = user.leads_limit() if user else -1
 
         imported = 0

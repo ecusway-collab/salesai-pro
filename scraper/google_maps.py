@@ -50,9 +50,8 @@ def scrape_google_maps(query: str, location: str, max_results: int = 50) -> List
     if settings.GOOGLE_MAPS_API_KEY:
         return _scrape_new_api(query, location, max_results)
     else:
-        logger.warning("No Google Maps API key — using Yellow Pages fallback")
-        from scraper.yellow_pages import scrape_yellow_pages
-        return scrape_yellow_pages(query, location, max_results)
+        logger.warning("No Google Maps API key — using Yelp/YP/OSM fallback chain")
+        return _fallback(query, location, max_results)
 
 
 def _scrape_new_api(query: str, location: str, max_results: int) -> List[Dict]:
@@ -90,9 +89,7 @@ def _scrape_new_api(query: str, location: str, max_results: int) -> List[Dict]:
             if not resp.ok:
                 error = data.get("error", {})
                 logger.error(f"Google Places API error: {error.get('message', resp.text)}")
-                logger.warning("Falling back to Yellow Pages scraper...")
-                from scraper.yellow_pages import scrape_yellow_pages
-                return scrape_yellow_pages(query, location, max_results)
+                return _fallback(query, location, max_results)
 
 
             places = data.get("places", [])
@@ -140,6 +137,39 @@ def _scrape_new_api(query: str, location: str, max_results: int) -> List[Dict]:
 
     logger.info(f"Google Maps: found {len(leads)} leads for '{query}' in {location}")
     return leads
+
+
+def _fallback(query: str, location: str, max_results: int) -> list:
+    """Ordered fallback: Yelp (API, reliable) → Yellow Pages → OpenStreetMap."""
+    # Try Yelp first — proper API, not blocked by cloud IPs
+    try:
+        from config import settings as _s
+        from scraper.yelp import scrape_yelp
+        yelp_key = _s.YELP_API_KEY
+        if yelp_key:
+            results = scrape_yelp(query, location, max_results, api_key=yelp_key)
+            if results:
+                logger.info(f"Yelp fallback returned {len(results)} results")
+                return results
+    except Exception as e:
+        logger.warning(f"Yelp fallback failed: {e}")
+
+    # Try Yellow Pages (works locally, often blocked from cloud IPs)
+    try:
+        from scraper.yellow_pages import scrape_yellow_pages
+        results = scrape_yellow_pages(query, location, max_results)
+        if results:
+            return results
+    except Exception as e:
+        logger.warning(f"Yellow Pages fallback failed: {e}")
+
+    # Last resort — OpenStreetMap (sparse phone data)
+    try:
+        from scraper.yellow_pages import scrape_openstreetmap
+        return scrape_openstreetmap(query, location, max_results)
+    except Exception as e:
+        logger.warning(f"OSM fallback failed: {e}")
+        return []
 
 
 def _infer_health_interest(types: list, name: str) -> str:

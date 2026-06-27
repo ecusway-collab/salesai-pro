@@ -47,6 +47,7 @@ class User(Base):
     from_email = Column(String(200))
     from_name = Column(String(200))
     elevenlabs_api_key = Column(String(300))
+    yelp_api_key = Column(String(300))
 
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
