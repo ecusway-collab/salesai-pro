@@ -94,6 +94,8 @@ def _scrape_new_api(query: str, location: str, max_results: int) -> List[Dict]:
 
             places = data.get("places", [])
             if not places:
+                if not leads:
+                    return _fallback(query, location, max_results)
                 break
 
             for place in places:
@@ -130,10 +132,10 @@ def _scrape_new_api(query: str, location: str, max_results: int) -> List[Dict]:
 
         except requests.exceptions.Timeout:
             logger.error("Google Places API timed out")
-            break
+            return _fallback(query, location, max_results)
         except Exception as e:
             logger.error(f"Google Places API error: {e}")
-            break
+            return _fallback(query, location, max_results)
 
     logger.info(f"Google Maps: found {len(leads)} leads for '{query}' in {location}")
     return leads
@@ -143,9 +145,11 @@ def _fallback(query: str, location: str, max_results: int) -> list:
     """Ordered fallback: Yelp (API, reliable) → Yellow Pages → OpenStreetMap."""
     # Try Yelp first — proper API, not blocked by cloud IPs
     try:
+        import os
         from config import settings as _s
         from scraper.yelp import scrape_yelp
-        yelp_key = _s.YELP_API_KEY
+        # settings is lru_cache'd so read os.environ directly too (runtime overrides)
+        yelp_key = _s.YELP_API_KEY or os.environ.get("YELP_API_KEY", "")
         if yelp_key:
             results = scrape_yelp(query, location, max_results, api_key=yelp_key)
             if results:
