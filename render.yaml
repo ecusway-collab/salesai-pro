@@ -36,7 +36,7 @@ services:
       - key: AGENT_NAME
         value: Alex
       - key: SHOP_URL
-        value: https://vitalhealthglobal.com/collections/all?refID=67597
+        value: https://healthfoodslist.com
       - key: JWT_SECRET
         generateValue: true
       - key: JWT_ALGORITHM
