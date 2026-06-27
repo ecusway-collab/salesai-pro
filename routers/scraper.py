@@ -101,7 +101,25 @@ def _run_scrape_job(job_id: int, user_id: int, source: str, query: str, location
     from models import User
     db = SessionLocal()
     try:
-        raw_leads = scrape_google_maps(query, location, max_results) if source == "google_maps" else scrape_yellow_pages(query, location, max_results)
+        try:
+            raw_leads = scrape_google_maps(query, location, max_results) if source == "google_maps" else scrape_yellow_pages(query, location, max_results)
+        except RuntimeError as api_err:
+            if "GOOGLE_API_DISABLED" in str(api_err):
+                job = db.query(ScraperJob).filter(ScraperJob.id == job_id).first()
+                if job:
+                    job.status = "failed"
+                    job.leads_found = 0
+                    job.leads_imported = 0
+                    job.error_message = (
+                        "Google Maps API not enabled on your project. "
+                        "Go to console.cloud.google.com → APIs & Services → Enable APIs → "
+                        "search 'Places API (New)' → Enable it. Then re-run the search."
+                    )
+                    job.completed_at = datetime.now()
+                    db.commit()
+                db.close()
+                return
+            raise
         job = db.query(ScraperJob).filter(ScraperJob.id == job_id).first()
 
         # Only count leads that have a phone number — no point importing ones you can't call

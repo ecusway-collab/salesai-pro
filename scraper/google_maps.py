@@ -88,8 +88,13 @@ def _scrape_new_api(query: str, location: str, max_results: int) -> List[Dict]:
             data = resp.json()
 
             if not resp.ok:
-                error_msg = data.get("error", {}).get("message", resp.text)
-                logger.error(f"Google Places API error: {error_msg}")
+                error = data.get("error", {})
+                details = error.get("details", [])
+                reason = next((d.get("reason", "") for d in details if "reason" in d), "")
+                if reason == "SERVICE_DISABLED" or resp.status_code == 403:
+                    # Surface this clearly so the job history shows a helpful message
+                    raise RuntimeError("GOOGLE_API_DISABLED:" + error.get("message", "Places API not enabled"))
+                logger.error(f"Google Places API error: {error.get('message', resp.text)}")
                 logger.warning("Falling back to Yellow Pages scraper...")
                 from scraper.yellow_pages import scrape_yellow_pages
                 return scrape_yellow_pages(query, location, max_results)
