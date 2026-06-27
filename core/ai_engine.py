@@ -139,43 +139,63 @@ def _extract_json(text: str) -> dict:
 
 # ── Script Generation ─────────────────────────────────────────────────────────
 
-def generate_cold_call_script(lead: dict, product_focus: str = None, user=None) -> dict:
+def generate_cold_call_script(lead: dict, product_focus: str = None, shop_url: str = None, user=None) -> dict:
     """
     Generate a full personalized cold call script for a lead.
     Returns: opening, discovery_questions, value_prop, objection_handlers,
              call_to_action, voicemail_script
     """
-    prompt = f"""Generate a HIGH-ENERGY, PERSUASIVE cold call script for this lead. The goal is to create IMMEDIATE EXCITEMENT and URGENCY so they want to take action RIGHT NOW.
+    effective_url = shop_url or (user.shop_url if user and user.shop_url else None) or settings.SHOP_URL
+    company = (user.company_name if user and user.company_name else None) or settings.COMPANY_NAME
+    agent = (user.agent_name if user and user.agent_name else None) or settings.AGENT_NAME
+
+    prompt = f"""Generate a HIGH-ENERGY, CONVERSATIONAL cold call script. This will be spoken by an AI voice — every word must sound natural when heard out loud.
 
 LEAD DETAILS:
 - Name: {lead.get('name', 'there')}
 - Company: {lead.get('company', 'not specified')}
 - Health Interest: {lead.get('health_interest', 'general wellness')}
 - Pain Points: {lead.get('pain_points', 'unknown')}
-- Product Focus: {product_focus or 'health and wealth solutions'}
+- Product Focus: {product_focus or 'health and energy solutions'}
 
-SCRIPT RULES:
-1. OPENING: Start with their name, create INSTANT CURIOSITY with a bold statement or surprising fact. Do NOT say "press 1" or "press 2" — the system handles that. Do NOT just say "I'm calling to share products." Make them think "wait, what?" — hook them in the first 5 seconds. ALWAYS end the opening by asking about their specific health goal or issue — e.g. "Can I ask — what's the one health challenge you'd love to sort out this year?" The system will then prompt them to just say yes if they want to learn more.
-2. URGENCY: Include a time-sensitive reason to act NOW (limited spots, special offer this week, product just launched, etc.)
-3. SOCIAL PROOF: Mention that others like them are already getting results
-4. BENEFIT-FIRST: Lead with what they GAIN, not what the product IS
-5. EASY YES: The call-to-action must feel like a casual conversation, not a sales pitch
-6. VOICEMAIL: Must be irresistible — they should WANT to call back or visit the site
+COMPANY: {company}
+AGENT NAME: {agent}
+WEBSITE: {effective_url}
+
+CRITICAL SCRIPT RULES — follow every single one:
+
+OPENING (this is what gets spoken first — make or break):
+- Start with "Hey [NAME]!" — warm, upbeat, like you know them
+- NEVER say "I hope I'm not catching you at a bad time" — it's an instant hangup
+- NEVER say "do you have 60 seconds" — just deliver the value immediately
+- Drop a SPECIFIC benefit in the first sentence: energy, metabolism, weight, income
+- Name a SPECIFIC product if possible based on their health interest
+- Tell them you will TEXT THE LINK right now — creates a reason to say yes
+- End with ONE easy yes/no question: "Does that sound like something worth 2 minutes?"
+- Speak like a REAL PERSON, not a telemarketer — contractions, natural rhythm
+- Keep it under 25 seconds when spoken aloud
+
+VOICEMAIL (spoken if they don't answer):
+- MUST include the website URL spoken letter by letter if unusual, or naturally if simple
+- Create curiosity they cannot ignore — hint at the benefit without giving it all away
+- Include: "Check us out at {effective_url}"
+- Under 20 seconds
+- End with your name and company
 
 Return a JSON object with these exact fields:
 {{
-  "opening": "20-30 second spoken hook — warm, energetic, curiosity-driven. Use their name. End with a question about their health goals or biggest health challenge. Do NOT include 'press 1' or 'press 2' instructions.",
+  "opening": "The spoken opening — warm, specific, benefit-first. Mention the product and that you'll text the link. End with one yes/no question. No press-1/press-2 instructions. Sound like a real person.",
   "discovery_questions": ["question 1", "question 2", "question 3"],
-  "value_proposition": "Exciting 2-3 sentence pitch focused on transformation and results, not features",
+  "value_proposition": "Exciting 2-3 sentence pitch focused on transformation and results",
   "objection_handlers": {{
-    "too expensive": "reframe as investment + mention easy entry point",
-    "not interested": "create curiosity — what if they're missing out on something huge?",
-    "already have a supplier": "acknowledge + offer something they don't currently have",
-    "send me info": "yes AND get a commitment for a quick follow-up call",
+    "too expensive": "reframe around daily cost + mention entry-level option",
+    "not interested": "create curiosity — hint at what they might be missing",
+    "already have a supplier": "acknowledge + offer what their current supplier doesn't have",
+    "send me info": "yes AND lock in a quick follow-up call",
     "call back later": "lock in a specific time right now"
   }},
-  "call_to_action": "Low-commitment next step — visit the website, get a free info pack, or book a 5-minute callback",
-  "voicemail_script": "Irresistible 20-second voicemail — hint at something exciting they're missing, include the website URL"
+  "call_to_action": "Send them to {effective_url} — mention it feels like browsing not buying",
+  "voicemail_script": "20-second voicemail that hints at the benefit and includes the website {effective_url}"
 }}"""
 
     try:
@@ -183,19 +203,24 @@ Return a JSON object with these exact fields:
         return _extract_json(text)
     except Exception:
         name = lead.get('name', 'there')
+        interest = lead.get('health_interest', 'energy and wellness')
         return {
-            "opening": f"Hey {name}! This is {settings.AGENT_NAME} from {settings.COMPANY_NAME} — quick question for you. We've been helping people in your area feel more energetic, healthier, and honestly just better overall. What's the one health challenge you'd love to finally sort out this year?",
-            "discovery_questions": ["What's the one health or wellness goal you haven't been able to crack yet?", "If you could change one thing about how you feel every day, what would it be?", "Have you ever explored products that actually give you more energy and help you earn at the same time?"],
-            "value_proposition": f"Here's the exciting part — {settings.COMPANY_NAME} isn't just about feeling better, it's about building a lifestyle. Our clients are getting real results fast, and many are even turning it into extra income. This isn't something you want to sleep on.",
+            "opening": f"Hey {name}! It's {agent} from {company}. I'm reaching out because we just launched something that's genuinely changing the game for people dealing with low energy and slow metabolism — and based on your profile, I think it could be exactly what you've been looking for. I can text you the link right now so you can see for yourself. Does that sound like something worth two minutes?",
+            "discovery_questions": [
+                "If you could fix one thing about your energy or health right now, what would it be?",
+                "Have you tried supplements before — what worked or didn't work for you?",
+                "Are you open to something that not only helps your health but could also earn you extra income?"
+            ],
+            "value_proposition": f"What we offer at {company} isn't just another supplement — it's a complete system for better energy, faster metabolism, and a sharper mind. Real people are seeing real results, and the income opportunity on top of that is what makes this different from everything else out there.",
             "objection_handlers": {
-                "too expensive": "I completely get that — and that's exactly why we have a starter option that costs less than a cup of coffee a day. The real question is, can you afford NOT to feel your best?",
-                "not interested": "Fair enough! But can I ask — what if I told you that people who said the same thing are now our biggest success stories? Just take 30 seconds to check out the website and decide for yourself.",
-                "already have a supplier": "That's great — but what if what we have fills a gap your current supplier doesn't? Most of our clients said the same thing before they tried us.",
-                "send me info": "Absolutely — and I'll send it right now. But let's also lock in a quick 5-minute call this week so I can answer your questions personally. What day works better for you, Tuesday or Thursday?",
-                "call back later": "Of course! I respect your time. Let's make it official — does tomorrow morning or afternoon work better for you?"
+                "too expensive": "I hear you — and honestly our entry-level product starts at under twenty dollars. That's less than a coffee a day. The question is whether feeling great every single day is worth that.",
+                "not interested": "That's totally fair! But can I ask — is energy or weight something you've been struggling with? Because the people who say that usually haven't seen what we actually have. Two minutes at our website — that's all I'm asking.",
+                "already have a supplier": "Respect that! Most of our best customers said the same thing. What we have fills gaps that most suppliers don't touch — especially on the energy and metabolism side. Worth a two-minute look.",
+                "send me info": "Done — I'm texting you the link right now. And let's lock in a quick five-minute call so I can answer any questions personally. Does Tuesday or Thursday work better for you?",
+                "call back later": "Absolutely — I respect your time. Quick question though — does tomorrow morning or afternoon work better for you? I want to make sure I actually reach you."
             },
-            "call_to_action": f"Here's what I want you to do right now — just visit {settings.SHOP_URL} and take a look. Takes 2 minutes. And I'll personally follow up with you to make sure you get the best deal available.",
-            "voicemail_script": f"Hey {name}, it's {settings.AGENT_NAME} from {settings.COMPANY_NAME}. I was going to share something pretty exciting with you — something people in your area are already taking advantage of. I don't want you to miss the window on this. Check us out at {settings.SHOP_URL} — and I'll follow up soon. Talk soon!",
+            "call_to_action": f"Just go to {effective_url} — it feels like browsing, not buying. Take two minutes, see what catches your eye, and I'll personally follow up to make sure you get the best deal available.",
+            "voicemail_script": f"Hey {name}, it's {agent} from {company}. I was calling because we just launched something for energy and metabolism that I genuinely think would change things for you. Check us out at {effective_url} — takes two minutes. I'll follow up soon. Have an amazing day!",
         }
 
 

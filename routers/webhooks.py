@@ -24,13 +24,11 @@ def xml_response(content: str) -> Response:
 
 @router.post("/voice/answer")
 async def voice_answer(request: Request, lead_id: int, db: Session = Depends(get_db)):
-    """
-    Called by Twilio when a lead picks up the phone.
-    Returns TwiML with the AI-generated opening script.
-    """
+    """Called by Twilio when a lead picks up. Returns TwiML with AI-generated opening."""
     try:
         lead = db.query(Lead).filter(Lead.id == lead_id).first()
         name = lead.name if lead else "there"
+        shop_url = _effective_shop_url(lead, db)
 
         lead_dict = {
             "name": name,
@@ -39,8 +37,14 @@ async def voice_answer(request: Request, lead_id: int, db: Session = Depends(get
             "pain_points": lead.pain_points if lead else "",
             "notes": lead.notes if lead else "",
         }
-        script = generate_cold_call_script(lead_dict)
-        opening = script.get("opening", f"Hi {name}, this is {_agent_name()} calling from {_company_name()}. I hope I'm not catching you at a bad time? We help people discover powerful health and wellness solutions. Do you have just 60 seconds?")
+        script = generate_cold_call_script(lead_dict, shop_url=shop_url)
+        opening = script.get(
+            "opening",
+            f"Hey {name}! It's {_agent_name()} from {_company_name()}. "
+            f"I'm reaching out because we have something for energy and metabolism that I think you'd genuinely love — "
+            f"and I can text you the link right now so you can see it for yourself. "
+            f"Does that sound like something worth two minutes?"
+        )
 
         gather_url = f"{_base_url()}/webhooks/voice/gather?lead_id={lead_id}"
         from config import settings as _s
@@ -54,8 +58,13 @@ async def voice_answer(request: Request, lead_id: int, db: Session = Depends(get
         logger.error(f"voice_answer error for lead {lead_id}: {e}")
         from twilio.twiml.voice_response import VoiceResponse
         r = VoiceResponse()
-        from config import settings as _cfg
-        r.say(f"Hi, this is {_agent_name()} from {_company_name()}. Please visit {_cfg.SHOP_URL} to learn more about our products. Have a wonderful day!", voice="Google.en-US-Neural2-F")
+        shop_url = _effective_shop_url(None, db)
+        r.say(
+            f"Hey there! It's {_agent_name()} from {_company_name()}. "
+            f"I was calling to share something exciting about natural energy and wellness. "
+            f"Check us out at {shop_url} — takes two minutes. Have an amazing day!",
+            voice="Google.en-US-Neural2-F"
+        )
         r.hangup()
         return xml_response(str(r))
 
@@ -90,7 +99,7 @@ async def voice_gather(request: Request, lead_id: int, db: Session = Depends(get
             return xml_response(build_response_twiml(response_text))
 
         if digits == "1" or any(phrase in speech.lower() for phrase in [
-            "tell me more", "interested", "yes", "sure", "go ahead", "okay", "ok", "sounds good"
+            "tell me more", "interested", "yes", "sure", "go ahead", "okay", "ok", "sounds good", "why not"
         ]):
             try:
                 if lead:
@@ -100,24 +109,27 @@ async def voice_gather(request: Request, lead_id: int, db: Session = Depends(get
             except Exception as db_err:
                 logger.error(f"DB update error (interested) lead {lead_id}: {db_err}")
 
+            shop_url = _effective_shop_url(lead, db)
+            company = _effective_company(lead, db)
+
             # Fire SMS immediately with the website link
             try:
                 if lead and lead.phone:
-                    from config import settings as _cfg
                     sms_body = (
-                        f"Hi {lead.name or 'there'}! It's {_agent_name()} from {_company_name()}. "
-                        f"Here's the link I mentioned — check it out: {_cfg.SHOP_URL} "
-                        f"Our team will follow up with you soon. Reply STOP to unsubscribe."
+                        f"Hey {lead.name or 'there'}! {_agent_name()} here from {company}. "
+                        f"As promised — here's your link: {shop_url} "
+                        f"Browse through and you'll see exactly what I was talking about. "
+                        f"Our team will follow up with you very soon! Reply STOP to unsubscribe."
                     )
                     send_sms(lead.phone, sms_body, lead_id=lead_id)
             except Exception as sms_err:
                 logger.error(f"SMS send error for lead {lead_id}: {sms_err}")
 
             response_text = (
-                "Amazing — I just sent you a text message right now with the link to our website. "
-                "Check it out when you get a chance — it only takes two minutes and I think you'll love what you see. "
-                "Can I ask quickly — what's your biggest health goal right now? "
-                "Energy, weight, sleep, or maybe even earning some extra income from home?"
+                f"Yes! I just texted you the link right now — go check it out, it's {shop_url}. "
+                f"Just browse through — you are not buying anything, you are just seeing what we have. "
+                f"I think you are going to be genuinely surprised. "
+                f"Real quick — what's your biggest thing right now — is it energy, weight, or maybe earning some extra income from home?"
             )
             gather_url = f"{_base_url()}/webhooks/voice/gather2?lead_id={lead_id}"
             return xml_response(build_response_twiml(response_text, gather_url))
@@ -180,12 +192,16 @@ async def voice_gather2(request: Request, lead_id: int, db: Session = Depends(ge
             except Exception as db_err:
                 logger.error(f"DB error in gather2 lead {lead_id}: {db_err}")
 
+        lead = db.query(Lead).filter(Lead.id == lead_id).first()
+        shop_url = _effective_shop_url(lead, db)
+        company = _effective_company(lead, db)
+
         closing = (
-            "Perfect — that's exactly what we can help with! "
-            "Check the text message I just sent you — the website link is right there. "
-            "Browse through and you'll see exactly what I mean. "
-            "Our team will personally follow up with you very soon to answer any questions. "
-            "Thank you so much — exciting things are coming your way!"
+            f"That is exactly what we can help with — and you are going to love what you find. "
+            f"The link is already in your texts right now — it's {shop_url}. "
+            f"Just take two minutes to browse through, no pressure at all. "
+            f"Someone from {company} will personally follow up with you very soon to answer any questions and make sure you get the best deal. "
+            f"Thank you so much — exciting things are coming your way!"
         )
         return xml_response(build_response_twiml(closing))
     except Exception as e:
@@ -401,5 +417,27 @@ def _agent_name() -> str:
 
 
 def _company_name() -> str:
+    from config import settings
+    return settings.COMPANY_NAME
+
+
+def _effective_shop_url(lead, db) -> str:
+    """Return campaign's shop URL override if set, otherwise fall back to account/platform URL."""
+    if lead and lead.campaign_id:
+        from models import Campaign
+        campaign = db.query(Campaign).filter(Campaign.id == lead.campaign_id).first()
+        if campaign and campaign.shop_url_override:
+            return campaign.shop_url_override
+    from config import settings
+    return settings.SHOP_URL
+
+
+def _effective_company(lead, db) -> str:
+    """Return campaign's brand name if set, otherwise fall back to account/platform company name."""
+    if lead and lead.campaign_id:
+        from models import Campaign
+        campaign = db.query(Campaign).filter(Campaign.id == lead.campaign_id).first()
+        if campaign and campaign.company_brand:
+            return campaign.company_brand
     from config import settings
     return settings.COMPANY_NAME
