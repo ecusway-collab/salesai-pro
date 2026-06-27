@@ -102,6 +102,8 @@ class Campaign(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     name = Column(String(200), nullable=False)
+    company_brand = Column(String(200), nullable=True)    # e.g. "Ignyt" — overrides user's company name for this campaign
+    shop_url_override = Column(String(500), nullable=True) # e.g. "https://ignyt.biz/healme"
     product_focus = Column(String(500))
     target_audience = Column(String(500))
     goal = Column(String(500))

@@ -59,6 +59,8 @@ class LeadOut(BaseModel):
 
 class CampaignCreate(BaseModel):
     name: str
+    company_brand: Optional[str] = None
+    shop_url_override: Optional[str] = None
     product_focus: Optional[str] = None
     target_audience: Optional[str] = None
     goal: Optional[str] = None
@@ -68,6 +70,8 @@ class CampaignCreate(BaseModel):
 class CampaignOut(BaseModel):
     id: int
     name: str
+    company_brand: Optional[str]
+    shop_url_override: Optional[str]
     product_focus: Optional[str]
     target_audience: Optional[str]
     goal: Optional[str]

@@ -372,8 +372,15 @@ Speak directly to them (no quotes, no labels). Just the response text."""
 
 def generate_campaign_templates(campaign: dict, user=None) -> dict:
     """Generate all templates for a new campaign at once."""
-    prompt = f"""Create complete sales templates for this natural health campaign:
+    company_name = campaign.get('company_brand') or (user.company_name if user else None) or settings.COMPANY_NAME
+    agent_name = (user.agent_name if user else None) or settings.AGENT_NAME
+    shop_url = campaign.get('shop_url_override') or (user.shop_url if user else None) or settings.SHOP_URL
 
+    prompt = f"""Create complete sales templates for this campaign. Use the exact company name and URL below — do NOT substitute them with any other brand.
+
+Company/Brand: {company_name}
+Agent Name: {agent_name}
+Shop/Product URL: {shop_url}
 Campaign: {campaign.get('name')}
 Product Focus: {campaign.get('product_focus', 'general wellness products')}
 Target Audience: {campaign.get('target_audience', 'health-conscious individuals')}
@@ -399,14 +406,13 @@ Return JSON:
         text = _call_claude([{"role": "user", "content": prompt}], max_tokens=2000, user=user)
         return _extract_json(text)
     except Exception:
-        name = campaign.get('name', 'Campaign')
         focus = campaign.get('product_focus', 'natural health products')
         audience = campaign.get('target_audience', 'health-conscious individuals')
         return {
-            "call_script_template": f"Hi [LEAD_NAME], this is {settings.AGENT_NAME} from {settings.COMPANY_NAME}. I'm reaching out because we help {audience} with {focus}. Do you have 60 seconds to hear how we can help you? Visit {settings.SHOP_URL} to learn more.",
-            "sms_template": f"Hi [NAME], {settings.AGENT_NAME} from {settings.COMPANY_NAME} here! We have amazing {focus} that could help you. Reply YES to learn more or STOP to unsubscribe.",
-            "email_subject": f"Discover {focus} — {settings.COMPANY_NAME}",
-            "email_body": f"Hi [NAME],\n\nI hope this finds you well! I'm reaching out from {settings.COMPANY_NAME} because we specialize in {focus} for {audience}.\n\nI'd love to share how our products can support your health goals.\n\nVisit us at {settings.SHOP_URL}\n\nTo your health,\n{settings.AGENT_NAME}\n{settings.COMPANY_NAME}",
+            "call_script_template": f"Hi [LEAD_NAME], this is {agent_name} from {company_name}. I'm reaching out because we help {audience} with {focus}. Do you have 60 seconds to hear how we can help you? Visit {shop_url} to learn more.",
+            "sms_template": f"Hi [NAME], {agent_name} from {company_name} here! We have amazing {focus} that could help you. Reply YES to learn more or STOP to unsubscribe.",
+            "email_subject": f"Discover {focus} — {company_name}",
+            "email_body": f"Hi [NAME],\n\nI hope this finds you well! I'm reaching out from {company_name} because we specialize in {focus} for {audience}.\n\nI'd love to share how our products can support your health goals.\n\nVisit us at {shop_url}\n\nTo your health,\n{agent_name}\n{company_name}",
             "followup_sequence": [
                 {"day": 1, "type": "call", "notes": "Initial cold call"},
                 {"day": 3, "type": "sms", "notes": "Check-in SMS"},

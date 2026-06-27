@@ -58,6 +58,12 @@ body { background: #f0f4f1; font-family: 'Segoe UI', sans-serif; }
 #callModal .script-box { background: var(--green-light); border-radius: 8px; padding: 16px; font-size: .88rem; line-height: 1.6; max-height: 200px; overflow-y: auto; }
 .objection-chip { background: #f1f5f9; border-radius: 6px; padding: 6px 12px; font-size: .82rem; cursor: pointer; transition: background .2s; display: inline-block; margin: 3px; }
 .objection-chip:hover { background: var(--green-light); }
+.bulk-banner { background: linear-gradient(135deg, var(--green-dark), var(--green)); color: #fff; }
+.bulk-banner-sub { font-size: .85rem; opacity: .8; }
+.bulk-cities-ta { font-size: .88rem; }
+.bulk-query-list { font-size: .9rem; }
+.bulk-info-box { background: #fff8e1; font-size: .8rem; }
+.bulk-hint { font-size: .75rem; }
 </style>
 </head>
 <body>
@@ -348,10 +354,79 @@ body { background: #f0f4f1; font-family: 'Segoe UI', sans-serif; }
 
   <!-- ══════════════ LEAD FINDER (SCRAPER) PAGE ══════════════ -->
   <div id="page-scraper" class="page">
+
+    <!-- Bulk Search Banner -->
+    <div class="card mb-3 border-0 bulk-banner">
+      <div class="card-body p-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+          <div class="fw-bold"><i class="bi bi-lightning-fill me-2"></i>Bulk Lead Search — Ignyt Launch</div>
+          <div class="bulk-banner-sub">Search multiple cities and business types at once. Pre-loaded for your July 4th launch.</div>
+        </div>
+        <button type="button" class="btn btn-sm btn-light fw-semibold" data-bs-toggle="collapse" data-bs-target="#bulkSearchPanel"><i class="bi bi-grid-3x3-gap me-1"></i>Open Bulk Search</button>
+      </div>
+    </div>
+
+    <!-- Bulk Search Panel -->
+    <div class="collapse mb-3" id="bulkSearchPanel">
+      <div class="card">
+        <div class="card-header fw-bold"><i class="bi bi-grid-3x3-gap me-2"></i>Bulk Search — Multiple Cities &amp; Business Types</div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-lg-5">
+              <label class="form-label fw-semibold">Cities to Search <small class="text-muted">(one per line)</small></label>
+              <textarea class="form-control bulk-cities-ta" id="bulkCities" rows="8">Miami, FL
+New York, NY
+Los Angeles, CA
+Chicago, IL
+Houston, TX
+Atlanta, GA
+Dallas, TX
+Toronto, ON, Canada
+Vancouver, BC, Canada
+Calgary, AB, Canada</textarea>
+            </div>
+            <div class="col-lg-4">
+              <label class="form-label fw-semibold">Business Types <small class="text-muted">(tick what to search)</small></label>
+              <div id="bulkQueryList" class="d-flex flex-column gap-1 bulk-query-list">
+                <label class="d-flex align-items-center gap-2"><input type="checkbox" class="bulk-query" value="gyms and fitness centers" checked> Gyms &amp; Fitness Centers</label>
+                <label class="d-flex align-items-center gap-2"><input type="checkbox" class="bulk-query" value="personal trainers" checked> Personal Trainers</label>
+                <label class="d-flex align-items-center gap-2"><input type="checkbox" class="bulk-query" value="health food stores" checked> Health Food Stores</label>
+                <label class="d-flex align-items-center gap-2"><input type="checkbox" class="bulk-query" value="wellness coaches" checked> Wellness Coaches</label>
+                <label class="d-flex align-items-center gap-2"><input type="checkbox" class="bulk-query" value="yoga studios" checked> Yoga &amp; Pilates Studios</label>
+                <label class="d-flex align-items-center gap-2"><input type="checkbox" class="bulk-query" value="supplement stores"> Supplement Stores</label>
+                <label class="d-flex align-items-center gap-2"><input type="checkbox" class="bulk-query" value="chiropractors"> Chiropractors</label>
+                <label class="d-flex align-items-center gap-2"><input type="checkbox" class="bulk-query" value="nutritionists and dietitians"> Nutritionists &amp; Dietitians</label>
+                <label class="d-flex align-items-center gap-2"><input type="checkbox" class="bulk-query" value="network marketing businesses"> Network Marketing Businesses</label>
+              </div>
+            </div>
+            <div class="col-lg-3">
+              <label class="form-label fw-semibold">Settings</label>
+              <div class="mb-2">
+                <label class="form-label small">Max per search</label>
+                <input type="number" class="form-control form-control-sm" id="bulkMax" value="30" min="5" max="100">
+              </div>
+              <div class="mb-2">
+                <label class="form-label small">Assign to Campaign</label>
+                <select class="form-select form-select-sm" id="bulkCampaign"><option value="">None</option></select>
+              </div>
+              <div class="mb-3 p-2 rounded bulk-info-box">
+                <i class="bi bi-info-circle me-1 text-warning"></i>
+                <span id="bulkJobCount">0 searches queued</span>
+              </div>
+              <button type="button" class="btn btn-green w-100 py-2" onclick="startBulkSearch()">
+                <i class="bi bi-lightning-fill me-2"></i>Start All Searches
+              </button>
+              <div class="mt-2 text-muted bulk-hint">Jobs run one at a time automatically. Check the Search History table below.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="row g-3">
       <div class="col-lg-5">
         <div class="card">
-          <div class="card-header">Find New Leads</div>
+          <div class="card-header">Single Search</div>
           <div class="card-body">
             <div class="mb-3">
               <label class="form-label fw-semibold">Source</label>
@@ -377,20 +452,20 @@ body { background: #f0f4f1; font-family: 'Segoe UI', sans-serif; }
               <label class="form-label fw-semibold">Assign to Campaign (optional)</label>
               <select class="form-select" id="scraperCampaign"><option value="">None</option></select>
             </div>
-            <button class="btn btn-green w-100 py-2" onclick="startScrape()"><i class="bi bi-search me-2"></i>Start Lead Search</button>
+            <button type="button" class="btn btn-green w-100 py-2" onclick="startScrape()"><i class="bi bi-search me-2"></i>Start Lead Search</button>
           </div>
         </div>
       </div>
       <div class="col-lg-7">
         <div class="card">
           <div class="card-header d-flex justify-content-between align-items-center">
-            <span>Scrape Jobs</span>
-            <button class="btn btn-sm btn-outline-secondary" onclick="loadScraperJobs()"><i class="bi bi-arrow-clockwise"></i></button>
+            <span>Search History</span>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="loadScraperJobs()"><i class="bi bi-arrow-clockwise"></i></button>
           </div>
           <div class="card-body p-0">
             <table class="table table-hover mb-0">
               <thead><tr><th>Query</th><th>Location</th><th>Source</th><th>Found</th><th>Imported</th><th>Status</th></tr></thead>
-              <tbody id="scraperJobs"><tr><td colspan="6" class="text-center py-3 text-muted">No jobs yet</td></tr></tbody>
+              <tbody id="scraperJobs"><tr><td colspan="6" class="text-center py-3 text-muted">No searches yet — use Bulk Search above to get started</td></tr></tbody>
             </table>
           </div>
         </div>
@@ -578,16 +653,24 @@ body { background: #f0f4f1; font-family: 'Segoe UI', sans-serif; }
     <div class="modal-header"><h5 class="modal-title">Create New Campaign</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
     <div class="modal-body">
       <div class="row g-3">
-        <div class="col-12"><label class="form-label">Campaign Name *</label><input class="form-control" id="cn-name" placeholder="e.g. Spring Wellness Push"></div>
-        <div class="col-md-6"><label class="form-label">Product Focus</label><input class="form-control" id="cn-product" placeholder="e.g. immune support line"></div>
-        <div class="col-md-6"><label class="form-label">Target Audience</label><input class="form-control" id="cn-audience" placeholder="e.g. gym owners in Texas"></div>
-        <div class="col-12"><label class="form-label">Campaign Goal</label><input class="form-control" id="cn-goal" placeholder="e.g. book 20 consultations this month"></div>
+        <div class="col-12"><label class="form-label">Campaign Name *</label><input class="form-control" id="cn-name" placeholder="e.g. Ignyt Freedom Run — Pre-Launch"></div>
+        <div class="col-md-6">
+          <label class="form-label">Brand / Company Name <small class="text-muted">(leave blank to use your account name)</small></label>
+          <input class="form-control" id="cn-brand" placeholder="e.g. Ignyt">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Product Website URL <small class="text-muted">(leave blank to use your account URL)</small></label>
+          <input class="form-control" id="cn-shopurl" placeholder="e.g. https://ignyt.biz/healme">
+        </div>
+        <div class="col-md-6"><label class="form-label">Product Focus</label><input class="form-control" id="cn-product" placeholder="e.g. Ignyt Metabolic Booster — energy + metabolism supplement"></div>
+        <div class="col-md-6"><label class="form-label">Target Audience</label><input class="form-control" id="cn-audience" placeholder="e.g. health-conscious entrepreneurs and wellness enthusiasts"></div>
+        <div class="col-12"><label class="form-label">Campaign Goal</label><input class="form-control" id="cn-goal" placeholder="e.g. Get leads to reserve their free spot before July 4th launch — urgency is key"></div>
       </div>
-      <div class="alert alert-info mt-3 small"><i class="bi bi-robot me-2"></i>Claude AI will automatically generate call scripts, SMS templates, email sequences, and a follow-up schedule for this campaign.</div>
+      <div class="alert alert-info mt-3 small"><i class="bi bi-robot me-2"></i>Claude AI will automatically generate call scripts, SMS templates, email sequences, and a follow-up schedule — using the brand and URL you enter above.</div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-      <button class="btn btn-green" onclick="createCampaign()"><i class="bi bi-magic me-1"></i>Create + Generate Templates</button>
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+      <button type="button" class="btn btn-green" onclick="createCampaign()"><i class="bi bi-magic me-1"></i>Create + Generate Templates</button>
     </div>
   </div></div>
 </div>
@@ -595,7 +678,7 @@ body { background: #f0f4f1; font-family: 'Segoe UI', sans-serif; }
 <!-- Toast -->
 <div class="toast-container">
   <div id="toast" class="toast align-items-center text-white border-0" role="alert">
-    <div class="d-flex"><div class="toast-body" id="toastMsg"></div><button class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>
+    <div class="d-flex"><div class="toast-body" id="toastMsg"></div><button type="button" class="btn-close btn-close-white me-2 m-auto" aria-label="Close" data-bs-dismiss="toast"></button></div>
   </div>
 </div>
 

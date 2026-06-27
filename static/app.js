@@ -424,6 +424,7 @@ async function loadCampaigns() {
               <h6 class="card-title mb-0">${c.name}</h6>
               <span class="badge bg-${c.status === 'active' ? 'success' : 'secondary'}">${c.status}</span>
             </div>
+            ${c.company_brand ? `<div class="mb-2"><span class="badge" style="background:#1a5c38;font-size:.75rem"><i class="bi bi-building me-1"></i>${c.company_brand}</span>${c.shop_url_override ? ` <a href="${c.shop_url_override}" target="_blank" class="small text-muted">${c.shop_url_override.replace('https://','')}</a>` : ''}</div>` : ''}
             <div class="text-muted small mb-1"><i class="bi bi-box-seam me-1"></i>${c.product_focus || '—'}</div>
             <div class="text-muted small mb-1"><i class="bi bi-people me-1"></i>${c.target_audience || '—'}</div>
             <div class="text-muted small mb-3"><i class="bi bi-bullseye me-1"></i>${c.goal || '—'}</div>
@@ -440,6 +441,8 @@ async function loadCampaigns() {
 async function createCampaign() {
   const data = {
     name: document.getElementById('cn-name').value.trim(),
+    company_brand: document.getElementById('cn-brand').value.trim() || null,
+    shop_url_override: document.getElementById('cn-shopurl').value.trim() || null,
     product_focus: document.getElementById('cn-product').value.trim(),
     target_audience: document.getElementById('cn-audience').value.trim(),
     goal: document.getElementById('cn-goal').value.trim(),
@@ -529,6 +532,17 @@ async function loadScraperPage() {
     ).join('');
     loadCampaignDropdowns();
     loadScraperJobs();
+
+    // Wire up bulk search live counter
+    document.getElementById('bulkCities')?.addEventListener('input', updateBulkJobCount);
+    document.querySelectorAll('.bulk-query').forEach(cb => cb.addEventListener('change', updateBulkJobCount));
+    updateBulkJobCount();
+
+    // Populate bulk campaign dropdown
+    const bulkSel = document.getElementById('bulkCampaign');
+    if (bulkSel && campaigns.length) {
+      bulkSel.innerHTML = '<option value="">None</option>' + campaigns.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    }
   } catch (e) { /* handled */ }
 }
 
@@ -678,6 +692,56 @@ async function upgradePlan() {
     const result = await apiFetch('/billing/checkout', { method: 'POST', body: JSON.stringify({ plan }) });
     if (result?.checkout_url) window.location.href = result.checkout_url;
   } catch(e) { /* handled */ }
+}
+
+// ── Bulk Search ───────────────────────────────────────────────────────────────
+
+function updateBulkJobCount() {
+  const cities = (document.getElementById('bulkCities')?.value || '')
+    .split('\n').map(s => s.trim()).filter(Boolean);
+  const queries = [...document.querySelectorAll('.bulk-query:checked')].map(c => c.value);
+  const total = cities.length * queries.length;
+  const el = document.getElementById('bulkJobCount');
+  if (el) el.textContent = `${total} search${total !== 1 ? 'es' : ''} queued (${cities.length} cities × ${queries.length} types)`;
+}
+
+async function startBulkSearch() {
+  const cities = (document.getElementById('bulkCities')?.value || '')
+    .split('\n').map(s => s.trim()).filter(Boolean);
+  const queries = [...document.querySelectorAll('.bulk-query:checked')].map(c => c.value);
+  const maxResults = parseInt(document.getElementById('bulkMax')?.value) || 30;
+  const campaignId = document.getElementById('bulkCampaign')?.value || null;
+
+  if (!cities.length) { showToast('Enter at least one city', 'warning'); return; }
+  if (!queries.length) { showToast('Tick at least one business type', 'warning'); return; }
+
+  const total = cities.length * queries.length;
+  if (!confirm(`This will start ${total} searches across ${cities.length} cities and ${queries.length} business types.\n\nEach search finds up to ${maxResults} leads. Continue?`)) return;
+
+  const btn = document.querySelector('[onclick="startBulkSearch()"]');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Queueing searches...';
+
+  let queued = 0, failed = 0;
+  for (const city of cities) {
+    for (const query of queries) {
+      try {
+        await apiFetch('/scraper/start', {
+          method: 'POST',
+          body: JSON.stringify({ source: 'google_maps', query, location: city, max_results: maxResults, campaign_id: campaignId || null }),
+        });
+        queued++;
+      } catch (e) { failed++; }
+      await new Promise(r => setTimeout(r, 400));
+    }
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<i class="bi bi-lightning-fill me-2"></i>Start All Searches';
+  showToast(`${queued} searches started${failed ? `, ${failed} failed` : ''}. Watch the Search History below.`, queued > 0 ? 'success' : 'danger');
+  loadScraperJobs();
+  setTimeout(loadScraperJobs, 5000);
+  setTimeout(loadScraperJobs, 15000);
 }
 
 // ── Shared Helpers ────────────────────────────────────────────────────────────

@@ -32,9 +32,11 @@ def init_db():
 def _migrate():
     """Safely add new columns to existing tables without dropping data."""
     new_columns = [
-        ("users", "from_email",         "VARCHAR(200)"),
-        ("users", "from_name",          "VARCHAR(200)"),
-        ("users", "elevenlabs_api_key", "VARCHAR(300)"),
+        ("users",     "from_email",         "VARCHAR(200)"),
+        ("users",     "from_name",          "VARCHAR(200)"),
+        ("users",     "elevenlabs_api_key", "VARCHAR(300)"),
+        ("campaigns", "company_brand",      "VARCHAR(200)"),
+        ("campaigns", "shop_url_override",  "VARCHAR(500)"),
     ]
     with engine.connect() as conn:
         for table, column, col_type in new_columns:
