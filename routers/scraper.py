@@ -138,7 +138,13 @@ def _run_scrape_job(job_id: int, user_id: int, source: str, query: str, location
         if effective_yelp_key:
             os.environ["YELP_API_KEY"] = effective_yelp_key
 
-        raw_leads = scrape_google_maps(query, location, max_results) if source == "google_maps" else scrape_yellow_pages(query, location, max_results)
+        if source == "google_maps":
+            raw_leads = scrape_google_maps(query, location, max_results)
+        elif source == "yelp":
+            from scraper.yelp import scrape_yelp
+            raw_leads = scrape_yelp(query, location, max_results, api_key=effective_yelp_key or "")
+        else:
+            raw_leads = scrape_yellow_pages(query, location, max_results)
         job = db.query(ScraperJob).filter(ScraperJob.id == job_id).first()
 
         # Detect if Google Maps job silently fell back to a different source

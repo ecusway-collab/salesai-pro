@@ -833,7 +833,7 @@ async function startBulkSearch() {
       try {
         await apiFetch('/scraper/start', {
           method: 'POST',
-          body: JSON.stringify({ source: 'google_maps', query, location: city, max_results: maxResults, campaign_id: campaignId || null }),
+          body: JSON.stringify({ source: 'yelp', query, location: city, max_results: maxResults, campaign_id: campaignId || null }),
         });
         queued++;
       } catch (e) {
