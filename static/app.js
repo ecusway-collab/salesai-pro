@@ -1042,6 +1042,44 @@ async function checkSettings() {
     <div><strong>Calls/mo:</strong> ${currentUser.calls_limit === -1 ? 'Unlimited' : currentUser.calls_limit}</div>
     ${currentUser.trial_ends_at ? `<div class="mt-1 text-muted small">Trial ends: ${currentUser.trial_ends_at}</div>` : ''}
   `;
+
+  loadReferralStats();
+}
+
+async function loadReferralStats() {
+  try {
+    const r = await apiFetch('/auth/referral');
+    const linkEl = document.getElementById('referralLink');
+    if (linkEl) linkEl.value = r.referral_link;
+    const tot = document.getElementById('refTotalSignups');
+    if (tot) tot.textContent = r.total_signups;
+    const paid = document.getElementById('refPaidConversions');
+    if (paid) paid.textContent = r.paid_conversions;
+    const listEl = document.getElementById('referralList');
+    if (listEl) {
+      if (r.referrals.length === 0) {
+        listEl.innerHTML = '<p class="text-muted small mb-0">No referrals yet. Share your link to get started!</p>';
+      } else {
+        const statusColor = { trialing: 'warning', active: 'success', cancelled: 'secondary', past_due: 'danger' };
+        listEl.innerHTML = `<table class="table table-sm mb-0" style="font-size:.8rem">
+          <thead><tr><th>Name</th><th>Plan</th><th>Status</th><th>Joined</th></tr></thead>
+          <tbody>${r.referrals.map(u => `
+            <tr>
+              <td>${u.name}</td>
+              <td class="text-capitalize">${u.plan}</td>
+              <td><span class="badge bg-${statusColor[u.status]||'secondary'}">${u.status}</span></td>
+              <td>${u.joined || '—'}</td>
+            </tr>`).join('')}
+          </tbody></table>`;
+      }
+    }
+  } catch(e) { /* silent — referral section is non-critical */ }
+}
+
+function copyReferralLink() {
+  const val = document.getElementById('referralLink')?.value;
+  if (!val) return;
+  navigator.clipboard.writeText(val).then(() => showToast('Referral link copied!', 'success'));
 }
 
 async function saveCredentials() {

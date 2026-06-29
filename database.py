@@ -38,6 +38,8 @@ def _migrate():
         ("users",     "yelp_api_key",       "VARCHAR(300)"),
         ("users",     "reset_token",        "VARCHAR(100)"),
         ("users",     "reset_token_expires","TIMESTAMP"),
+        ("users",     "referral_code",      "VARCHAR(20)"),
+        ("users",     "referred_by",        "VARCHAR(20)"),
         ("campaigns", "company_brand",      "VARCHAR(200)"),
         ("campaigns", "shop_url_override",  "VARCHAR(500)"),
     ]

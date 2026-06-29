@@ -50,6 +50,8 @@ class User(Base):
     yelp_api_key = Column(String(300))
     reset_token = Column(String(100))
     reset_token_expires = Column(DateTime)
+    referral_code = Column(String(20), unique=True, index=True)
+    referred_by = Column(String(20))
 
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())

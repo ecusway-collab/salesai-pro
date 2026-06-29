@@ -25,6 +25,7 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
     plan: Optional[str] = "starter"
+    ref: Optional[str] = None
 
 
 class TokenResponse(BaseModel):
@@ -67,6 +68,16 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
     if data.plan not in ("starter", "pro", "agency"):
         data.plan = "starter"
 
+    ref_code = secrets.token_hex(4)  # 8-char unique referral code
+    while db.query(User).filter(User.referral_code == ref_code).first():
+        ref_code = secrets.token_hex(4)
+
+    referred_by = None
+    if data.ref:
+        referrer = db.query(User).filter(User.referral_code == data.ref.strip()).first()
+        if referrer:
+            referred_by = data.ref.strip()
+
     user = User(
         name=data.name,
         email=data.email,
@@ -75,6 +86,8 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
         status="trialing",
         trial_ends_at=datetime.utcnow() + timedelta(days=settings.TRIAL_DAYS),
         company_name=data.name + "'s Company",
+        referral_code=ref_code,
+        referred_by=referred_by,
     )
     db.add(user)
     db.commit()
@@ -163,6 +176,36 @@ def update_credentials(
     return {"message": "Credentials updated", "user": _user_dict(current_user)}
 
 
+@router.get("/referral")
+def referral_stats(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Return the user's referral code, link, and signup stats."""
+    if not current_user.referral_code:
+        code = secrets.token_hex(4)
+        while db.query(User).filter(User.referral_code == code).first():
+            code = secrets.token_hex(4)
+        current_user.referral_code = code
+        db.commit()
+
+    referrals = db.query(User).filter(User.referred_by == current_user.referral_code).all()
+    paid = [r for r in referrals if r.status == "active"]
+
+    return {
+        "referral_code": current_user.referral_code,
+        "referral_link": f"{settings.BASE_URL}/login?ref={current_user.referral_code}#register",
+        "total_signups": len(referrals),
+        "paid_conversions": len(paid),
+        "referrals": [
+            {
+                "name": r.name,
+                "plan": r.plan,
+                "status": r.status,
+                "joined": str(r.created_at)[:10] if r.created_at else None,
+            }
+            for r in referrals
+        ],
+    }
+
+
 @router.patch("/profile")
 def update_profile(
     name: Optional[str] = None,
@@ -210,6 +253,7 @@ def _user_dict(user: User) -> dict:
         "has_google_maps": bool(user.google_maps_api_key),
         "has_elevenlabs": bool(user.elevenlabs_api_key),
         "has_yelp": bool(user.yelp_api_key),
+        "referral_code": user.referral_code,
         "leads_limit": user.leads_limit(),
         "calls_limit": user.calls_limit(),
         "created_at": str(user.created_at)[:10] if user.created_at else None,

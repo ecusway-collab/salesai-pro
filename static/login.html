@@ -159,9 +159,11 @@ function selectPlan(plan) {
   ['starter','pro','agency'].forEach(p => document.getElementById('plan-'+p).classList.toggle('selected', p === plan));
 }
 
+const _refCode = new URLSearchParams(window.location.search).get('ref') || '';
+
 window.addEventListener('load', () => {
   const hash = window.location.hash;
-  if (hash.includes('register')) showTab('register');
+  if (hash.includes('register') || _refCode) showTab('register');
   if (hash.includes('forgot')) showTab('forgot');
   const planMatch = hash.match(/plan=(\w+)/);
   if (planMatch) {
@@ -169,6 +171,13 @@ window.addEventListener('load', () => {
     document.querySelector(`input[value="${planMatch[1]}"]`).checked = true;
   } else {
     selectPlan('starter');
+  }
+  if (_refCode) {
+    const banner = document.createElement('div');
+    banner.className = 'alert alert-success d-flex align-items-center gap-2 mb-3 py-2';
+    banner.style.fontSize = '.88rem';
+    banner.innerHTML = '<i class="bi bi-gift-fill"></i> You were referred by a friend — enjoy your free 14-day trial!';
+    document.getElementById('registerForm').prepend(banner);
   }
 });
 
@@ -232,6 +241,7 @@ async function handleRegister(e) {
         email: document.getElementById('regEmail').value,
         password: document.getElementById('regPassword').value,
         plan,
+        ref: _refCode || undefined,
       })
     });
     clearTimeout(warmupTimer);

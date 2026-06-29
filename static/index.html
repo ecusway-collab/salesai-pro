@@ -751,6 +751,40 @@ Calgary, AB, Canada</textarea>
             </div>
           </div>
         </div>
+
+        <!-- Referral Program -->
+        <div class="card mt-3">
+          <div class="card-header d-flex align-items-center gap-2">
+            <i class="bi bi-gift-fill text-success"></i> Referral Program
+            <span class="badge bg-success ms-1" style="font-size:.68rem">Earn Cash</span>
+          </div>
+          <div class="card-body">
+            <p class="text-muted small mb-3">Share your unique link. Every person who signs up and becomes a paid subscriber earns you a referral bonus — paid manually via PayPal.</p>
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">Your Referral Link</label>
+              <div class="input-group input-group-sm">
+                <input type="text" class="form-control form-control-sm" id="referralLink" readonly style="font-size:.8rem">
+                <button class="btn btn-outline-secondary" onclick="copyReferralLink()" title="Copy"><i class="bi bi-clipboard"></i></button>
+              </div>
+            </div>
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <div class="text-center p-3 rounded" style="background:#f0faf4">
+                  <div id="refTotalSignups" class="fw-bold" style="font-size:1.5rem;color:var(--green)">—</div>
+                  <div class="text-muted" style="font-size:.78rem">Total Sign-ups</div>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="text-center p-3 rounded" style="background:#f0faf4">
+                  <div id="refPaidConversions" class="fw-bold" style="font-size:1.5rem;color:var(--green)">—</div>
+                  <div class="text-muted" style="font-size:.78rem">Paid Conversions</div>
+                </div>
+              </div>
+            </div>
+            <div id="referralList" style="max-height:180px;overflow-y:auto"></div>
+            <p class="text-muted mt-2 mb-0" style="font-size:.75rem"><i class="bi bi-info-circle me-1"></i>To claim your referral bonus, email <a href="mailto:support@vitalhealthglobal.com">support@vitalhealthglobal.com</a> with your account email.</p>
+          </div>
+        </div>
       </div>
 
     </div>
