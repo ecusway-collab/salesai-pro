@@ -8,7 +8,7 @@ from config import settings
 from database import init_db
 from core.scheduler import start_scheduler, stop_scheduler
 from routers import leads, campaigns, calls, webhooks, scraper
-from routers import auth, billing
+from routers import auth, billing, schedule
 
 logging.basicConfig(
     level=logging.INFO,
@@ -42,6 +42,7 @@ app.include_router(campaigns.router)
 app.include_router(calls.router)
 app.include_router(webhooks.router)
 app.include_router(scraper.router)
+app.include_router(schedule.router)
 
 # ── Static files ──────────────────────────────────────────────────────────────
 app.mount("/static", StaticFiles(directory="static"), name="static")

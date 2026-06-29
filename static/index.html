@@ -52,6 +52,15 @@ body { background: #f0f4f1; font-family: 'Segoe UI', sans-serif; }
 .pipeline-header { background: #fff; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px; font-weight: 600; font-size: .85rem; display: flex; justify-content: space-between; align-items: center; }
 .btn-green { background: var(--green); color: #fff; border: none; }
 .btn-green:hover { background: var(--green-dark); color: #fff; }
+.sched-type-btn { border: 2px solid #e9ecef; border-radius: 10px; padding: 10px 6px; font-size: .8rem; color: #6c757d; transition: .15s; }
+.sched-type-btn.active { border-color: var(--green); background: #f0faf4; color: var(--green); font-weight: 700; }
+.sched-type-btn:hover { border-color: var(--green); }
+.sched-row { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-bottom: 1px solid #f1f5f1; transition: .15s; }
+.sched-row:hover { background: #f8fbf9; }
+.sched-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .95rem; flex-shrink: 0; }
+.sched-icon.call { background: #dcfce7; color: #15803d; }
+.sched-icon.sms  { background: #dbeafe; color: #1d4ed8; }
+.sched-icon.email{ background: #fef3c7; color: #92400e; }
 .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; }
 .table th { font-size: .8rem; text-transform: uppercase; color: #6c757d; font-weight: 600; background: #f8f9fa; }
 .score-bar { height: 6px; border-radius: 3px; background: #e9ecef; }
@@ -75,8 +84,8 @@ body { background: #f0f4f1; font-family: 'Segoe UI', sans-serif; }
 <!-- SIDEBAR -->
 <div class="sidebar">
   <div class="sidebar-logo">
-    <h5><i class="bi bi-lightning-fill me-2"></i>Primitive Solution</h5>
-    <small>Sales Automation System</small>
+    <h5><i class="bi bi-lightning-fill me-2"></i>SalesAI Pro</h5>
+    <small>AI Sales Automation</small>
   </div>
   <nav class="nav flex-column pt-2">
     <a class="nav-link active" onclick="showPage('dashboard')" href="#"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a>
@@ -84,6 +93,7 @@ body { background: #f0f4f1; font-family: 'Segoe UI', sans-serif; }
     <a class="nav-link" onclick="showPage('pipeline')" href="#"><i class="bi bi-kanban me-2"></i>Pipeline</a>
     <a class="nav-link" onclick="showPage('campaigns')" href="#"><i class="bi bi-megaphone me-2"></i>Campaigns</a>
     <a class="nav-link" onclick="showPage('callcenter')" href="#"><i class="bi bi-telephone me-2"></i>Call Center</a>
+    <a class="nav-link" onclick="showPage('schedule')" href="#"><i class="bi bi-calendar-check me-2"></i>Schedule</a>
     <a class="nav-link" onclick="showPage('scraper')" href="#"><i class="bi bi-search me-2"></i>Lead Finder</a>
     <a class="nav-link" onclick="showPage('settings')" href="#"><i class="bi bi-gear me-2"></i>Settings</a>
   </nav>
@@ -112,7 +122,7 @@ body { background: #f0f4f1; font-family: 'Segoe UI', sans-serif; }
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header" style="background:var(--green-dark);color:#fff;border-radius:12px 12px 0 0">
-          <h4 class="modal-title"><i class="bi bi-lightning-fill me-2"></i>Welcome to Primitive Solution Sales AI</h4>
+          <h4 class="modal-title"><i class="bi bi-lightning-fill me-2"></i>Welcome to SalesAI Pro</h4>
         </div>
         <div class="modal-body p-4">
           <p class="text-muted mb-4">Follow these 5 steps to get your first AI-powered sales call running in minutes.</p>
@@ -531,6 +541,88 @@ Calgary, AB, Canada</textarea>
               <thead><tr><th><input type="checkbox" id="jobSelectAll" onchange="toggleSelectAllJobs(this)"></th><th>Query</th><th>Location</th><th>Source</th><th>Found</th><th>Imported</th><th>Status</th><th></th></tr></thead>
               <tbody id="scraperJobs"><tr><td colspan="8" class="text-center py-3 text-muted">No searches yet — use Bulk Search above to get started</td></tr></tbody>
             </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SCHEDULE PAGE ══════════════ -->
+  <div id="page-schedule" class="page">
+
+    <!-- Best times tip -->
+    <div class="alert d-flex align-items-start gap-3 mb-4" style="background:#f0faf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px 20px">
+      <i class="bi bi-clock-fill mt-1" style="color:#2d8653;font-size:1.1rem"></i>
+      <div>
+        <strong style="color:#1a5c38">Best times to call</strong>
+        <span class="text-muted" style="font-size:.88rem"> — Tue–Thu 10:00–11:30 AM &amp; 4:00–5:30 PM (lead's local time).
+        Avoid Mondays, Friday afternoons, and before 9 AM / after 6 PM.</span>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <!-- Quick-schedule form -->
+      <div class="col-12 col-lg-4">
+        <div class="card h-100">
+          <div class="card-header fw-bold"><i class="bi bi-plus-circle me-2 text-success"></i>Schedule a Contact</div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Lead</label>
+              <input type="text" class="form-control" id="schedLeadSearch" placeholder="Search by name or phone..." oninput="schedSearchLeads(this.value)">
+              <div id="schedLeadResults" class="list-group mt-1" style="max-height:160px;overflow-y:auto;display:none"></div>
+              <input type="hidden" id="schedLeadId">
+              <div id="schedLeadSelected" class="mt-1" style="display:none">
+                <span class="badge bg-success" id="schedLeadBadge"></span>
+                <a href="#" onclick="clearSchedLead(); return false;" class="ms-2 small text-danger">change</a>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Type</label>
+              <div class="d-flex gap-2">
+                <label class="flex-grow-1 text-center" style="cursor:pointer">
+                  <input type="radio" name="schedType" value="call" checked class="visually-hidden" onchange="updateSchedTypeUI()">
+                  <div class="sched-type-btn active" id="stype-call"><i class="bi bi-telephone-fill"></i><br><small>Call</small></div>
+                </label>
+                <label class="flex-grow-1 text-center" style="cursor:pointer">
+                  <input type="radio" name="schedType" value="sms" class="visually-hidden" onchange="updateSchedTypeUI()">
+                  <div class="sched-type-btn" id="stype-sms"><i class="bi bi-chat-dots-fill"></i><br><small>SMS</small></div>
+                </label>
+                <label class="flex-grow-1 text-center" style="cursor:pointer">
+                  <input type="radio" name="schedType" value="email" class="visually-hidden" onchange="updateSchedTypeUI()">
+                  <div class="sched-type-btn" id="stype-email"><i class="bi bi-envelope-fill"></i><br><small>Email</small></div>
+                </label>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Date &amp; Time</label>
+              <input type="datetime-local" class="form-control" id="schedDateTime">
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Note <span class="text-muted fw-normal">(optional)</span></label>
+              <input type="text" class="form-control" id="schedNote" placeholder="e.g. Interested in weight loss products">
+            </div>
+            <button class="btn btn-green w-100" onclick="submitSchedule()"><i class="bi bi-calendar-plus me-2"></i>Schedule</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upcoming list -->
+      <div class="col-12 col-lg-8">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span class="fw-bold"><i class="bi bi-calendar3 me-2"></i>Upcoming (next 14 days)</span>
+            <button class="btn btn-sm btn-outline-secondary" onclick="loadSchedule()"><i class="bi bi-arrow-clockwise"></i></button>
+          </div>
+          <div id="scheduleList" class="list-group list-group-flush" style="min-height:120px">
+            <div class="text-center text-muted py-4">Loading...</div>
+          </div>
+        </div>
+
+        <!-- Recent history -->
+        <div class="card mt-4">
+          <div class="card-header fw-bold"><i class="bi bi-clock-history me-2"></i>Recent Activity</div>
+          <div id="scheduleHistory" class="list-group list-group-flush" style="min-height:60px">
+            <div class="text-center text-muted py-3">Loading...</div>
           </div>
         </div>
       </div>

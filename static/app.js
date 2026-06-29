@@ -43,7 +43,8 @@ function showPage(name) {
   });
   const titles = {
     dashboard: 'Dashboard', leads: 'Leads', pipeline: 'Pipeline',
-    campaigns: 'Campaigns', callcenter: 'Call Center', scraper: 'Lead Finder', settings: 'Settings'
+    campaigns: 'Campaigns', callcenter: 'Call Center', scraper: 'Lead Finder',
+    schedule: 'Schedule', settings: 'Settings'
   };
   document.getElementById('pageTitle').textContent = titles[name] || name;
 
@@ -54,6 +55,7 @@ function showPage(name) {
   else if (name === 'callcenter') { loadCallCenter(); }
   else if (name === 'scraper') { loadScraperPage(); }
   else if (name === 'settings') { checkSettings(); }
+  else if (name === 'schedule') { loadSchedule(); initSchedForm(); }
 }
 
 function loadAll() { showPage(document.getElementById('pageTitle').textContent.toLowerCase().replace(' ', '')); }
@@ -780,6 +782,155 @@ async function deduplicateLeads() {
       loadLeads();
     }
   } catch (e) { /* handled */ }
+}
+
+// ── Schedule ──────────────────────────────────────────────────────────────────
+
+let schedLeadCache = [];
+
+function initSchedForm() {
+  // Default datetime to next Tuesday or Wednesday at 10:30 AM
+  const now = new Date();
+  const day = now.getDay(); // 0=Sun … 6=Sat
+  const daysUntilTue = (2 - day + 7) % 7 || 7;
+  const target = new Date(now);
+  target.setDate(now.getDate() + daysUntilTue);
+  target.setHours(10, 30, 0, 0);
+  const pad = n => String(n).padStart(2, '0');
+  const iso = `${target.getFullYear()}-${pad(target.getMonth()+1)}-${pad(target.getDate())}T${pad(target.getHours())}:${pad(target.getMinutes())}`;
+  const el = document.getElementById('schedDateTime');
+  if (el && !el.value) el.value = iso;
+}
+
+async function loadSchedule() {
+  const [upcoming, history] = await Promise.all([
+    apiFetch('/schedule/upcoming?days=14').catch(() => []),
+    apiFetch('/schedule/history?limit=20').catch(() => []),
+  ]);
+  renderScheduleList(upcoming);
+  renderScheduleHistory(history);
+}
+
+function renderScheduleList(items) {
+  const el = document.getElementById('scheduleList');
+  if (!items || items.length === 0) {
+    el.innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-calendar-x" style="font-size:2rem;opacity:.3"></i><br>No upcoming scheduled contacts.<br><small>Use the form to schedule your first call.</small></div>';
+    return;
+  }
+  el.innerHTML = items.map(item => {
+    const dt = new Date(item.scheduled_at);
+    const dateStr = dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    const timeStr = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    const icons = { call: 'bi-telephone-fill', sms: 'bi-chat-dots-fill', email: 'bi-envelope-fill' };
+    return `
+      <div class="sched-row">
+        <div class="sched-icon ${item.type}"><i class="bi ${icons[item.type] || 'bi-calendar'}"></i></div>
+        <div class="flex-grow-1" style="min-width:0">
+          <div class="fw-semibold text-truncate">${item.lead_name}</div>
+          <div style="font-size:.8rem;color:#6c757d">${item.type.toUpperCase()} · ${dateStr} at ${timeStr}</div>
+          ${item.message ? `<div style="font-size:.76rem;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.message}</div>` : ''}
+        </div>
+        <div class="d-flex flex-column align-items-end gap-1">
+          <span class="badge" style="background:#dcfce7;color:#15803d;font-size:.7rem">Pending</span>
+          <button class="btn btn-sm btn-outline-danger py-0 px-2" style="font-size:.75rem" onclick="cancelScheduled(${item.id})"><i class="bi bi-x"></i> Cancel</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderScheduleHistory(items) {
+  const el = document.getElementById('scheduleHistory');
+  if (!items || items.length === 0) {
+    el.innerHTML = '<div class="text-center text-muted py-3 small">No activity yet.</div>';
+    return;
+  }
+  const statusColors = { sent: '#dcfce7', failed: '#fee2e2', cancelled: '#f3f4f6' };
+  const statusText  = { sent: '#15803d', failed: '#b91c1c', cancelled: '#6b7280' };
+  el.innerHTML = items.map(item => {
+    const dt = item.executed_at ? new Date(item.executed_at) : new Date(item.scheduled_at);
+    const dateStr = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const timeStr = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    const icons = { call: 'bi-telephone-fill', sms: 'bi-chat-dots-fill', email: 'bi-envelope-fill' };
+    return `
+      <div class="sched-row" style="opacity:${item.status === 'cancelled' ? '.55' : '1'}">
+        <div class="sched-icon ${item.type}" style="opacity:.7"><i class="bi ${icons[item.type] || 'bi-calendar'}"></i></div>
+        <div class="flex-grow-1" style="min-width:0">
+          <div class="fw-semibold text-truncate" style="font-size:.9rem">${item.lead_name}</div>
+          <div style="font-size:.78rem;color:#6c757d">${item.type.toUpperCase()} · ${dateStr} ${timeStr}</div>
+          ${item.error_message ? `<div style="font-size:.74rem;color:#ef4444">${item.error_message}</div>` : ''}
+        </div>
+        <span class="badge" style="background:${statusColors[item.status]||'#f3f4f6'};color:${statusText[item.status]||'#374151'};font-size:.7rem">${item.status}</span>
+      </div>`;
+  }).join('');
+}
+
+async function schedSearchLeads(q) {
+  const resultsEl = document.getElementById('schedLeadResults');
+  if (q.length < 2) { resultsEl.style.display = 'none'; return; }
+  try {
+    const leads = await apiFetch(`/leads?search=${encodeURIComponent(q)}&limit=8`);
+    schedLeadCache = leads || [];
+    if (schedLeadCache.length === 0) { resultsEl.style.display = 'none'; return; }
+    resultsEl.innerHTML = schedLeadCache.map(l =>
+      `<a href="#" class="list-group-item list-group-item-action py-2 px-3" onclick="selectSchedLead(${l.id},'${(l.name||'').replace(/'/g,"\\'")}'); return false;">
+        <div class="fw-semibold" style="font-size:.88rem">${l.name}</div>
+        <div style="font-size:.76rem;color:#6c757d">${l.phone || l.email || ''}</div>
+      </a>`
+    ).join('');
+    resultsEl.style.display = '';
+  } catch(e) { resultsEl.style.display = 'none'; }
+}
+
+function selectSchedLead(id, name) {
+  document.getElementById('schedLeadId').value = id;
+  document.getElementById('schedLeadSearch').value = '';
+  document.getElementById('schedLeadBadge').textContent = name;
+  document.getElementById('schedLeadSelected').style.display = '';
+  document.getElementById('schedLeadResults').style.display = 'none';
+}
+
+function clearSchedLead() {
+  document.getElementById('schedLeadId').value = '';
+  document.getElementById('schedLeadSearch').value = '';
+  document.getElementById('schedLeadSelected').style.display = 'none';
+}
+
+function updateSchedTypeUI() {
+  const val = document.querySelector('input[name="schedType"]:checked')?.value;
+  ['call','sms','email'].forEach(t => {
+    document.getElementById('stype-' + t)?.classList.toggle('active', t === val);
+  });
+}
+
+async function submitSchedule() {
+  const leadId = document.getElementById('schedLeadId').value;
+  const type = document.querySelector('input[name="schedType"]:checked')?.value;
+  const dt = document.getElementById('schedDateTime').value;
+  const note = document.getElementById('schedNote').value.trim();
+
+  if (!leadId) { showToast('Please select a lead first.', 'warning'); return; }
+  if (!dt) { showToast('Please pick a date and time.', 'warning'); return; }
+
+  try {
+    await apiFetch('/schedule/manual', {
+      method: 'POST',
+      body: JSON.stringify({ lead_id: parseInt(leadId), type, scheduled_at: dt, message: note || undefined }),
+    });
+    showToast(`${type.toUpperCase()} scheduled!`, 'success');
+    clearSchedLead();
+    document.getElementById('schedNote').value = '';
+    initSchedForm();
+    loadSchedule();
+  } catch(e) { /* handled by apiFetch */ }
+}
+
+async function cancelScheduled(id) {
+  if (!confirm('Cancel this scheduled item?')) return;
+  try {
+    await apiFetch(`/schedule/${id}`, { method: 'DELETE' });
+    showToast('Cancelled.', 'success');
+    loadSchedule();
+  } catch(e) { /* handled */ }
 }
 
 // ── Quick Actions ─────────────────────────────────────────────────────────────
