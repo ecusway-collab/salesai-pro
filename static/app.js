@@ -183,6 +183,7 @@ function renderLeadsTable(leads) {
           <button class="btn btn-sm btn-outline-success" title="Call" onclick="quickDial(${l.id})"><i class="bi bi-telephone"></i></button>
           <button class="btn btn-sm btn-outline-primary" title="SMS" onclick="quickSMS(${l.id})"><i class="bi bi-chat-text"></i></button>
           <button class="btn btn-sm btn-outline-warning" title="Email" onclick="quickEmail(${l.id})"><i class="bi bi-envelope"></i></button>
+          <button class="btn btn-sm btn-outline-info" title="View Script" onclick="previewScript(${l.id},'${l.name}')"><i class="bi bi-file-text"></i></button>
           <button class="btn btn-sm btn-outline-secondary" title="Edit" onclick="editLead(${l.id})"><i class="bi bi-pencil"></i></button>
           <button class="btn btn-sm btn-outline-danger" title="Delete" onclick="deleteLead(${l.id},'${l.name}')"><i class="bi bi-trash"></i></button>
         </div>
@@ -705,6 +706,48 @@ async function quickEmail(leadId) {
     await apiFetch(`/calls/email/${leadId}`, { method: 'POST' });
     showToast('Email sent!', 'success');
   } catch (e) { /* handled */ }
+}
+
+async function previewScript(leadId, leadName) {
+  document.getElementById('scriptLeadName').textContent = leadName;
+  document.getElementById('scriptModalBody').innerHTML =
+    '<div class="text-center py-4"><div class="spinner-border text-success"></div><p class="mt-2 text-muted">Generating script...</p></div>';
+  const modal = new bootstrap.Modal(document.getElementById('scriptModal'));
+  modal.show();
+  try {
+    const data = await apiFetch(`/calls/preview-script/${leadId}`);
+    const s = data.script;
+    document.getElementById('scriptModalBody').innerHTML = `
+      <div class="mb-4">
+        <h6 class="fw-bold text-success mb-2"><i class="bi bi-play-circle me-1"></i>Opening Line</h6>
+        <div class="bg-light rounded p-3">${s.opening || '—'}</div>
+      </div>
+      <div class="mb-4">
+        <h6 class="fw-bold text-primary mb-2"><i class="bi bi-question-circle me-1"></i>Discovery Questions</h6>
+        <ol class="mb-0">${(s.discovery_questions || []).map(q => `<li class="mb-1">${q}</li>`).join('')}</ol>
+      </div>
+      <div class="mb-4">
+        <h6 class="fw-bold text-warning mb-2"><i class="bi bi-star me-1"></i>Value Proposition</h6>
+        <div class="bg-light rounded p-3">${s.value_proposition || '—'}</div>
+      </div>
+      <div class="mb-4">
+        <h6 class="fw-bold text-danger mb-2"><i class="bi bi-shield me-1"></i>Objection Handlers</h6>
+        ${Object.entries(s.objection_handlers || {}).map(([obj, resp]) =>
+          `<div class="mb-2"><span class="badge bg-secondary me-2">${obj}</span><span>${resp}</span></div>`
+        ).join('')}
+      </div>
+      <div class="mb-4">
+        <h6 class="fw-bold text-info mb-2"><i class="bi bi-flag me-1"></i>Call to Action</h6>
+        <div class="bg-light rounded p-3">${s.call_to_action || '—'}</div>
+      </div>
+      <div>
+        <h6 class="fw-bold text-secondary mb-2"><i class="bi bi-voicemail me-1"></i>Voicemail Script</h6>
+        <div class="bg-light rounded p-3 fst-italic">${s.voicemail_script || '—'}</div>
+      </div>`;
+  } catch (e) {
+    document.getElementById('scriptModalBody').innerHTML =
+      '<div class="alert alert-danger">Failed to generate script. Check your API key in Settings.</div>';
+  }
 }
 
 async function rescoreLead(leadId) {
