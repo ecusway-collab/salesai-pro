@@ -48,6 +48,8 @@ class User(Base):
     from_name = Column(String(200))
     elevenlabs_api_key = Column(String(300))
     yelp_api_key = Column(String(300))
+    reset_token = Column(String(100))
+    reset_token_expires = Column(DateTime)
 
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())

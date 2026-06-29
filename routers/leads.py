@@ -161,3 +161,39 @@ async def import_leads_csv(
         for lead_id in imported:
             schedule_followup_sequence(lead_id)
     return {"imported": len(imported), "errors": errors, "lead_ids": imported}
+
+
+@router.post("/deduplicate")
+def deduplicate_leads(current_user=Depends(get_active_user), db: Session = Depends(get_db)):
+    """Remove duplicate leads — keeps the highest-scored copy, deletes the rest."""
+    leads = db.query(Lead).filter(Lead.user_id == current_user.id).order_by(
+        Lead.score.desc().nullslast(), Lead.created_at.asc()
+    ).all()
+
+    seen_phones = {}
+    seen_companies = {}
+    to_delete = []
+
+    for lead in leads:
+        phone = (lead.phone or "").strip()
+        company = (lead.company or "").lower().strip()
+
+        if phone:
+            if phone in seen_phones:
+                to_delete.append(lead.id)
+                continue
+            seen_phones[phone] = lead.id
+
+        if not phone and company:
+            if company in seen_companies:
+                to_delete.append(lead.id)
+                continue
+            seen_companies[company] = lead.id
+
+    if to_delete:
+        db.query(Lead).filter(
+            Lead.id.in_(to_delete), Lead.user_id == current_user.id
+        ).delete(synchronize_session=False)
+        db.commit()
+
+    return {"deleted": len(to_delete)}

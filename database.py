@@ -36,6 +36,8 @@ def _migrate():
         ("users",     "from_name",          "VARCHAR(200)"),
         ("users",     "elevenlabs_api_key", "VARCHAR(300)"),
         ("users",     "yelp_api_key",       "VARCHAR(300)"),
+        ("users",     "reset_token",        "VARCHAR(100)"),
+        ("users",     "reset_token_expires","TIMESTAMP"),
         ("campaigns", "company_brand",      "VARCHAR(200)"),
         ("campaigns", "shop_url_override",  "VARCHAR(500)"),
     ]

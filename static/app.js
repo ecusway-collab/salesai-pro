@@ -684,6 +684,19 @@ async function deleteAllLeads() {
   } catch (e) { /* handled */ }
 }
 
+async function deduplicateLeads() {
+  if (!confirm('Remove duplicate leads? Keeps the highest-scored copy of each duplicate phone number or company name. This cannot be undone.')) return;
+  try {
+    const r = await apiFetch('/leads/deduplicate', { method: 'POST' });
+    if (r.deleted === 0) {
+      showToast('No duplicates found — your leads are already clean!', 'info');
+    } else {
+      showToast(`Removed ${r.deleted} duplicate lead${r.deleted !== 1 ? 's' : ''}.`, 'success');
+      loadLeads();
+    }
+  } catch (e) { /* handled */ }
+}
+
 // ── Quick Actions ─────────────────────────────────────────────────────────────
 
 async function quickDial(leadId) {

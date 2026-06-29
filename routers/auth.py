@@ -1,4 +1,6 @@
 """Auth endpoints — register, login, refresh, me, update credentials."""
+import logging
+import secrets
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -10,6 +12,8 @@ from database import get_db
 from models import User
 from core.auth import hash_password, verify_password, create_access_token, create_refresh_token, get_current_user
 from config import settings
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -29,6 +33,13 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
     user: dict
 
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
 
 class CredentialsUpdate(BaseModel):
     twilio_account_sid: Optional[str] = None
@@ -86,6 +97,55 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
 @router.get("/me")
 def me(current_user: User = Depends(get_current_user)):
     return _user_dict(current_user)
+
+
+@router.post("/forgot-password")
+def forgot_password(data: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    """Send a password reset link to the user's email."""
+    user = db.query(User).filter(User.email == data.email.lower().strip()).first()
+    if user:
+        token = secrets.token_urlsafe(32)
+        user.reset_token = token
+        user.reset_token_expires = datetime.utcnow() + timedelta(hours=1)
+        db.commit()
+        reset_url = f"{settings.BASE_URL}/reset-password?token={token}"
+        try:
+            import sendgrid
+            from sendgrid.helpers.mail import Mail
+            sg = sendgrid.SendGridAPIClient(api_key=settings.SENDGRID_API_KEY)
+            msg = Mail(
+                from_email=(settings.FROM_EMAIL, settings.FROM_NAME),
+                to_emails=user.email,
+                subject="Reset your SalesAI Pro password",
+                plain_text_content=(
+                    f"Hi {user.name},\n\n"
+                    f"Click the link below to reset your password. It expires in 1 hour.\n\n"
+                    f"{reset_url}\n\n"
+                    f"If you didn't request this, you can safely ignore this email.\n\n"
+                    f"— The {settings.COMPANY_NAME} Team"
+                ),
+            )
+            sg.send(msg)
+        except Exception as e:
+            logger.error(f"Reset email send failed: {e}")
+    return {"message": "If that email is registered, a reset link has been sent."}
+
+
+@router.post("/reset-password")
+def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
+    """Reset password using a valid reset token."""
+    user = db.query(User).filter(User.reset_token == data.token).first()
+    if not user or not user.reset_token_expires:
+        raise HTTPException(400, "Invalid or expired reset link.")
+    if datetime.utcnow() > user.reset_token_expires:
+        raise HTTPException(400, "This reset link has expired. Please request a new one.")
+    if len(data.new_password) < 8:
+        raise HTTPException(400, "Password must be at least 8 characters.")
+    user.password_hash = hash_password(data.new_password)
+    user.reset_token = None
+    user.reset_token_expires = None
+    db.commit()
+    return {"message": "Password reset successfully. You can now log in."}
 
 
 @router.patch("/credentials")

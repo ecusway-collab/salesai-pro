@@ -63,6 +63,26 @@ def dashboard():
     return FileResponse("static/index.html")
 
 
+@app.get("/reset-password", include_in_schema=False)
+def reset_password_page():
+    return FileResponse("static/reset-password.html")
+
+
+@app.get("/privacy", include_in_schema=False)
+def privacy_page():
+    return FileResponse("static/privacy.html")
+
+
+@app.get("/terms", include_in_schema=False)
+def terms_page():
+    return FileResponse("static/terms.html")
+
+
+@app.get("/refund", include_in_schema=False)
+def refund_page():
+    return FileResponse("static/refund.html")
+
+
 @app.get("/billing/success", include_in_schema=False)
 def billing_success():
     return FileResponse("static/index.html")
