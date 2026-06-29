@@ -199,11 +199,14 @@ def _run_scrape_job(job_id: int, user_id: int, source: str, query: str, location
         job.completed_at = datetime.now()
         db.commit()
     except Exception as e:
-        db = SessionLocal()
-        job = db.query(ScraperJob).filter(ScraperJob.id == job_id).first()
-        if job:
-            job.status = "failed"
-            job.error_message = str(e)
-            job.completed_at = datetime.now()
-            db.commit()
+        try:
+            job = db.query(ScraperJob).filter(ScraperJob.id == job_id).first()
+            if job:
+                job.status = "failed"
+                job.error_message = str(e)
+                job.completed_at = datetime.now()
+                db.commit()
+        except Exception:
+            pass
+    finally:
         db.close()

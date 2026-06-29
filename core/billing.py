@@ -77,8 +77,16 @@ def create_portal_session(stripe_customer_id: str, return_url: str) -> str:
     return session.url
 
 
-def handle_webhook(payload: bytes) -> dict:
-    """Parse a Stripe webhook event."""
+def handle_webhook(payload: bytes, signature: str = "") -> dict:
+    """Parse and verify a Stripe webhook event."""
+    from config import settings as _s
+    webhook_secret = getattr(_s, "STRIPE_WEBHOOK_SECRET", "")
+    if webhook_secret and signature:
+        try:
+            event = stripe.Webhook.construct_event(payload, signature, webhook_secret)
+            return event
+        except stripe.error.SignatureVerificationError:
+            raise ValueError("Invalid Stripe webhook signature")
     import json
     return json.loads(payload)
 

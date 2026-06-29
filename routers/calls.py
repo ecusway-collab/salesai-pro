@@ -7,6 +7,7 @@ from typing import Optional
 
 from database import get_db
 from models import Lead, Interaction, FollowUp, User
+from core.auth import get_active_user, check_call_limit
 from core.voice_caller import make_outbound_call
 from core.sms_sender import send_sms
 from core.email_sender import send_email
@@ -19,9 +20,9 @@ router = APIRouter(prefix="/calls", tags=["calls"])
 
 
 @router.post("/dial/{lead_id}")
-def dial_lead(lead_id: int, product_focus: Optional[str] = None, db: Session = Depends(get_db)):
+def dial_lead(lead_id: int, product_focus: Optional[str] = None, current_user=Depends(check_call_limit), db: Session = Depends(get_db)):
     """Initiate an AI-powered outbound call to a lead."""
-    lead = db.query(Lead).filter(Lead.id == lead_id).first()
+    lead = db.query(Lead).filter(Lead.id == lead_id, Lead.user_id == current_user.id).first()
     if not lead:
         raise HTTPException(404, "Lead not found")
     if lead.do_not_contact:
@@ -66,9 +67,9 @@ def dial_lead(lead_id: int, product_focus: Optional[str] = None, db: Session = D
 
 
 @router.post("/sms/{lead_id}")
-def send_sms_to_lead(lead_id: int, message: Optional[str] = None, db: Session = Depends(get_db)):
+def send_sms_to_lead(lead_id: int, message: Optional[str] = None, current_user=Depends(get_active_user), db: Session = Depends(get_db)):
     """Send an AI-generated (or custom) SMS to a lead."""
-    lead = db.query(Lead).filter(Lead.id == lead_id).first()
+    lead = db.query(Lead).filter(Lead.id == lead_id, Lead.user_id == current_user.id).first()
     if not lead:
         raise HTTPException(404, "Lead not found")
     if lead.do_not_contact:
@@ -110,10 +111,11 @@ def send_sms_to_lead(lead_id: int, message: Optional[str] = None, db: Session = 
 def send_email_to_lead(
     lead_id: int,
     email_type: str = "first_followup",
+    current_user=Depends(get_active_user),
     db: Session = Depends(get_db),
 ):
     """Send an AI-generated follow-up email to a lead."""
-    lead = db.query(Lead).filter(Lead.id == lead_id).first()
+    lead = db.query(Lead).filter(Lead.id == lead_id, Lead.user_id == current_user.id).first()
     if not lead:
         raise HTTPException(404, "Lead not found")
     if lead.do_not_contact:
@@ -161,10 +163,9 @@ def send_email_to_lead(
 
 
 @router.get("/preview-script/{lead_id}")
-def preview_script(lead_id: int, db: Session = Depends(get_db)):
+def preview_script(lead_id: int, current_user=Depends(get_active_user), db: Session = Depends(get_db)):
     """Generate and return the AI call script for a lead without making a call."""
-    from core.auth import get_active_user
-    lead = db.query(Lead).filter(Lead.id == lead_id).first()
+    lead = db.query(Lead).filter(Lead.id == lead_id, Lead.user_id == current_user.id).first()
     if not lead:
         raise HTTPException(404, "Lead not found")
     user = db.query(User).filter(User.id == lead.user_id).first() if lead.user_id else None

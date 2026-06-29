@@ -102,7 +102,9 @@ def check_call_limit(user=Depends(get_active_user), db: Session = Depends(get_db
     if limit == -1:
         return user
     month_start = date.today().replace(day=1)
+    from models import Lead as _Lead
     count = db.query(Interaction).join(Interaction.lead).filter(
+        _Lead.user_id == user.id,
         Interaction.type == "call",
         Interaction.created_at >= str(month_start),
     ).count()

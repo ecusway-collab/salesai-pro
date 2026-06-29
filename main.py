@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from config import settings
 from database import init_db
 from core.scheduler import start_scheduler, stop_scheduler
 from routers import leads, campaigns, calls, webhooks, scraper
@@ -101,6 +102,6 @@ def unsubscribe(lead_id: int):
     <div class="text-center p-5">
     <h2 class="text-success">&#10003; Unsubscribed</h2>
     <p class="text-muted">Hi {name}, you have been removed from our mailing list.<br>
-    You will no longer receive emails or calls from Primitive Solution.</p>
+    You will no longer receive emails or calls from {settings.COMPANY_NAME}.</p>
     <a href="/" class="btn btn-outline-secondary mt-3">Go to Homepage</a>
     </div></body></html>""")

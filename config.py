@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     # Stripe
     STRIPE_SECRET_KEY: str = ""
     STRIPE_PUBLISHABLE_KEY: str = ""
+    STRIPE_WEBHOOK_SECRET: str = ""
     STRIPE_PRICE_STARTER: str = ""
     STRIPE_PRICE_PRO: str = ""
     STRIPE_PRICE_AGENCY: str = ""

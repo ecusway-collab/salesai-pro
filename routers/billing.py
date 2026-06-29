@@ -80,9 +80,10 @@ def customer_portal(
 async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     """Handle Stripe webhook events — update subscription status in DB."""
     payload = await request.body()
+    signature = request.headers.get("stripe-signature", "")
 
     try:
-        event = handle_webhook(payload)
+        event = handle_webhook(payload, signature)
     except Exception as e:
         raise HTTPException(400, str(e))
 
