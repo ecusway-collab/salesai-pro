@@ -1,4 +1,5 @@
 """Call center — trigger calls, view history, send SMS/email manually."""
+import json
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -41,7 +42,7 @@ def dial_lead(lead_id: int, product_focus: Optional[str] = None, db: Session = D
         lead_id=lead.id,
         type="call",
         direction="outbound",
-        content=str(script),
+        content=json.dumps(script) if isinstance(script, dict) else str(script),
         outcome="initiating",
     )
     db.add(interaction)

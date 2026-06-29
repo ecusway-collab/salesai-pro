@@ -26,24 +26,42 @@ def xml_response(content: str) -> Response:
 async def voice_answer(request: Request, lead_id: int, db: Session = Depends(get_db)):
     """Called by Twilio when a lead picks up. Returns TwiML with AI-generated opening."""
     try:
+        import json as _json
         lead = db.query(Lead).filter(Lead.id == lead_id).first()
         name = lead.name if lead else "there"
         shop_url = _effective_shop_url(lead, db)
 
-        lead_dict = {
-            "name": name,
-            "company": lead.company if lead else "",
-            "health_interest": lead.health_interest if lead else "",
-            "pain_points": lead.pain_points if lead else "",
-            "notes": lead.notes if lead else "",
-        }
-        script = generate_cold_call_script(lead_dict, shop_url=shop_url)
+        # Use the script that was pre-generated before dialing — avoids 3-5 sec dead air
+        script = None
+        stored = (
+            db.query(Interaction)
+            .filter(Interaction.lead_id == lead_id, Interaction.type == "call", Interaction.outcome == "initiating")
+            .order_by(Interaction.created_at.desc())
+            .first()
+        )
+        if stored and stored.content:
+            try:
+                script = _json.loads(stored.content)
+                stored.outcome = "call_answered"
+                db.commit()
+            except Exception:
+                pass
+
+        if not script:
+            lead_dict = {
+                "name": name,
+                "company": lead.company if lead else "",
+                "health_interest": lead.health_interest if lead else "",
+                "pain_points": lead.pain_points if lead else "",
+                "notes": lead.notes if lead else "",
+            }
+            script = generate_cold_call_script(lead_dict, shop_url=shop_url)
+
         opening = script.get(
             "opening",
             f"Hey {name}! It's {_agent_name()} from {_company_name()}. "
-            f"I'm reaching out because we have something for energy and metabolism that I think you'd genuinely love — "
-            f"and I can text you the link right now so you can see it for yourself. "
-            f"Does that sound like something worth two minutes?"
+            f"I'm reaching out because there's a free wellness opportunity closing July 4th that I think you genuinely need to hear about. "
+            f"Can I take 30 seconds to tell you what it is?"
         )
 
         gather_url = f"{_base_url()}/webhooks/voice/gather?lead_id={lead_id}"
@@ -63,7 +81,7 @@ async def voice_answer(request: Request, lead_id: int, db: Session = Depends(get
             f"Hey there! It's {_agent_name()} from {_company_name()}. "
             f"I was calling to share something exciting about natural energy and wellness. "
             f"Check us out at {shop_url} — takes two minutes. Have an amazing day!",
-            voice="Google.en-US-Neural2-F"
+            voice="Google.en-US-Neural2-J"
         )
         r.hangup()
         return xml_response(str(r))
@@ -164,7 +182,7 @@ async def voice_gather(request: Request, lead_id: int, db: Session = Depends(get
         r = VoiceResponse()
         r.say(
             "Thank you so much for your time! We'll be in touch soon with more information. Have a wonderful day!",
-            voice="Google.en-US-Neural2-F",
+            voice="Google.en-US-Neural2-J",
         )
         r.hangup()
         return xml_response(str(r))
@@ -208,7 +226,7 @@ async def voice_gather2(request: Request, lead_id: int, db: Session = Depends(ge
         logger.error(f"voice_gather2 crash for lead {lead_id}: {e}")
         from twilio.twiml.voice_response import VoiceResponse
         r = VoiceResponse()
-        r.say("Thank you for your time! We'll follow up with you soon.", voice="Google.en-US-Neural2-F")
+        r.say("Thank you for your time! We'll follow up with you soon.", voice="Google.en-US-Neural2-J")
         r.hangup()
         return xml_response(str(r))
 
@@ -400,7 +418,7 @@ async def call_audio(lead_id: int, db: Session = Depends(get_db)):
         # Fall back to Polly TwiML so the call doesn't fail
         from twilio.twiml.voice_response import VoiceResponse as VR
         r = VR()
-        r.say(text, voice="Google.en-US-Neural2-F", language="en-US")
+        r.say(text, voice="Google.en-US-Neural2-J", language="en-US")
         return Response(content=str(r), media_type="application/xml")
 
     return FastResponse(content=audio, media_type="audio/mpeg")
