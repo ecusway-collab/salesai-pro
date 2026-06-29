@@ -27,6 +27,7 @@ async function initAuth() {
     document.getElementById('planBadge').textContent = currentUser.plan.toUpperCase() + ' PLAN';
     document.getElementById('userEmail').textContent = currentUser.email;
     maybeShowGuide();
+    renderOnboardingChecklist();
     return true;
   } catch(e) { logout(); return false; }
 }
@@ -65,6 +66,90 @@ function maybeShowGuide() {
   if (!localStorage.getItem('guideShown')) {
     setTimeout(() => new bootstrap.Modal(document.getElementById('welcomeModal')).show(), 800);
   }
+}
+
+// ── Onboarding Checklist ────────────────────────────────────────────────────
+
+function renderOnboardingChecklist() {
+  if (!currentUser) return;
+  if (localStorage.getItem('checklistDismissed')) return;
+
+  const steps = [
+    {
+      key: 'twilio',
+      done: currentUser.has_twilio,
+      icon: 'bi-telephone-fill',
+      label: 'Twilio credentials',
+      desc: 'Account SID, Auth Token & phone number',
+      action: "showPage('settings')",
+    },
+    {
+      key: 'anthropic',
+      done: currentUser.has_anthropic,
+      icon: 'bi-cpu-fill',
+      label: 'Anthropic API key',
+      desc: 'Powers AI call scripts & scoring',
+      action: "showPage('settings')",
+    },
+    {
+      key: 'sendgrid',
+      done: currentUser.has_sendgrid,
+      icon: 'bi-envelope-fill',
+      label: 'SendGrid API key',
+      desc: 'Sends email follow-ups',
+      action: "showPage('settings')",
+    },
+    {
+      key: 'brand',
+      done: !!(currentUser.company_name && currentUser.agent_name && currentUser.shop_url),
+      icon: 'bi-shop',
+      label: 'Company & shop details',
+      desc: 'Company name, agent name, shop URL',
+      action: "showPage('settings')",
+    },
+  ];
+
+  const done = steps.filter(s => s.done).length;
+  const total = steps.length;
+  const allDone = done === total;
+
+  const el = document.getElementById('onboardingChecklist');
+  if (!el) return;
+
+  if (allDone) {
+    el.style.display = 'none';
+    return;
+  }
+
+  el.style.display = '';
+
+  const itemsEl = document.getElementById('checklistItems');
+  itemsEl.innerHTML = steps.map(s => `
+    <div class="col-12 col-md-6">
+      <div onclick="${s.done ? '' : s.action}" style="background:rgba(255,255,255,${s.done ? '.08' : '.12'});border-radius:10px;padding:12px 14px;cursor:${s.done ? 'default' : 'pointer'};transition:.2s;border:1px solid rgba(255,255,255,${s.done ? '.05' : '.2'})">
+        <div class="d-flex align-items-center gap-3">
+          <div style="width:32px;height:32px;border-radius:50%;background:${s.done ? '#6ee7a0' : 'rgba(255,255,255,.2)'};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <i class="bi ${s.done ? 'bi-check-lg' : s.icon}" style="color:${s.done ? '#1a5c38' : '#fff'};font-size:.9rem"></i>
+          </div>
+          <div class="flex-grow-1" style="min-width:0">
+            <div style="font-weight:600;font-size:.88rem;color:${s.done ? 'rgba(255,255,255,.5)' : '#fff'};text-decoration:${s.done ? 'line-through' : 'none'}">${s.label}</div>
+            <div style="font-size:.76rem;color:rgba(255,255,255,.55)">${s.desc}</div>
+          </div>
+          ${s.done ? '' : '<i class="bi bi-arrow-right-circle" style="color:rgba(255,255,255,.5);font-size:1rem"></i>'}
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  const pct = Math.round((done / total) * 100);
+  document.getElementById('checklistProgress').textContent = `${done} of ${total} done`;
+  document.getElementById('checklistBar').style.width = pct + '%';
+}
+
+function dismissChecklist() {
+  localStorage.setItem('checklistDismissed', '1');
+  const el = document.getElementById('onboardingChecklist');
+  if (el) el.style.display = 'none';
 }
 
 // ── API Helpers ─────────────────────────────────────────────────────────────
@@ -834,6 +919,7 @@ async function saveCredentials() {
     showToast('Settings saved!', 'success');
     await initAuth();
     checkSettings();
+    renderOnboardingChecklist();
   } catch(e) { /* handled */ }
 }
 
