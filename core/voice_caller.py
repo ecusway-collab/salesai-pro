@@ -84,20 +84,16 @@ def build_call_twiml_elevenlabs(opening: str, gather_action_url: str, audio_url:
         input="speech",
         action=gather_action_url,
         method="POST",
-        speech_timeout="auto",
-        timeout=12,
+        speech_timeout="3",
+        timeout=8,
         language="en-US",
     )
+    gather.pause(length=1)
     gather.play(audio_url)
-    gather.say(
-        "Just say yes if you want to learn more — or say no thanks and I won't bother you again.",
-        voice=VOICE,
-        language="en-US",
-    )
     response.append(gather)
 
     response.say(
-        "No problem at all! I'll send you some information and follow up another time. Have a wonderful day!",
+        "Hey, no worries at all! I'll send you some info and we can connect another time. Have an amazing day!",
         voice=VOICE,
         language="en-US",
     )
