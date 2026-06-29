@@ -232,7 +232,7 @@ Return a JSON object with these exact fields:
         name = lead.get('name', 'there')
         interest = lead.get('health_interest', 'energy and wellness')
         return {
-            "opening": f"Hey {name}! It's {agent} from {company}. I'm reaching out because we just launched something that's genuinely changing the game for people dealing with low energy and slow metabolism — and based on your profile, I think it could be exactly what you've been looking for. I can text you the link right now so you can see for yourself. Does that sound like something worth two minutes?",
+            "opening": f"Hey {name}! It's {agent} from {company}. Real quick — there's a free wellness opportunity that closes July 4th and I think you need to hear about it before it's gone. It takes 30 seconds and there's literally no cost to get in right now. Does that sound worth hearing?",
             "discovery_questions": [
                 "If you could fix one thing about your energy or health right now, what would it be?",
                 "Have you tried supplements before — what worked or didn't work for you?",

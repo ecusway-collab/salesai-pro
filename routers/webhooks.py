@@ -152,10 +152,22 @@ async def voice_gather(request: Request, lead_id: int, db: Session = Depends(get
             gather_url = f"{_base_url()}/webhooks/voice/gather2?lead_id={lead_id}"
             return xml_response(build_response_twiml(response_text, gather_url))
 
+        # Person said hello/hey before hearing opening — re-engage with the pitch
+        if any(w in speech.lower() for w in ["hello", "hi", "hey", "who is", "who's", "what is", "yeah", "yep"]):
+            company = _effective_company(lead, db)
+            shop_url = _effective_shop_url(lead, db)
+            response_text = (
+                f"Hey! Sorry — this is {_agent_name()} with {company}. "
+                f"Quick one — there's a free wellness opportunity closing July 4th and I think you genuinely need to hear about it. "
+                f"Can I take 30 seconds to tell you what it is?"
+            )
+            gather_url = f"{_base_url()}/webhooks/voice/gather?lead_id={lead_id}"
+            return xml_response(build_response_twiml(response_text, gather_url))
+
         # Handle speech with AI
         response_text = (
-            "No problem at all! We have some amazing products that could really help you. "
-            "Check us out online and our team will follow up with you soon."
+            "Totally understand! Let me just say — there's a free wellness opportunity closing July 4th "
+            "that takes two minutes to look at. I'll text you the link right now. No pressure at all."
         )
         if speech and lead:
             try:

@@ -163,15 +163,17 @@ def send_email_to_lead(
 @router.get("/preview-script/{lead_id}")
 def preview_script(lead_id: int, db: Session = Depends(get_db)):
     """Generate and return the AI call script for a lead without making a call."""
+    from core.auth import get_active_user
     lead = db.query(Lead).filter(Lead.id == lead_id).first()
     if not lead:
         raise HTTPException(404, "Lead not found")
+    user = db.query(User).filter(User.id == lead.user_id).first() if lead.user_id else None
     lead_dict = {
         "name": lead.name, "company": lead.company or "",
         "health_interest": lead.health_interest or "",
         "pain_points": lead.pain_points or "", "notes": lead.notes or "",
     }
-    script = generate_cold_call_script(lead_dict)
+    script = generate_cold_call_script(lead_dict, user=user)
     return {"lead_id": lead_id, "lead_name": lead.name, "script": script}
 
 

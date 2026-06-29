@@ -54,6 +54,7 @@ VOICE = "Google.en-US-Neural2-J"  # Warm American male — matches agent name "A
 def build_call_twiml(opening: str, gather_action_url: str) -> str:
     """Build TwiML for the opening of a cold call."""
     response = VoiceResponse()
+    response.pause(length=1)  # Outside gather — "hello" is NOT captured here
 
     gather = Gather(
         input="speech",
@@ -63,7 +64,6 @@ def build_call_twiml(opening: str, gather_action_url: str) -> str:
         timeout=8,
         language="en-US",
     )
-    gather.pause(length=1)  # Let the person finish saying "hello" before AI speaks
     gather.say(opening, voice=VOICE, language="en-US")
     response.append(gather)
 
@@ -88,7 +88,6 @@ def build_call_twiml_elevenlabs(opening: str, gather_action_url: str, audio_url:
         timeout=8,
         language="en-US",
     )
-    gather.pause(length=1)
     gather.play(audio_url)
     response.append(gather)
 
