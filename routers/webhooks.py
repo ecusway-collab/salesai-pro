@@ -57,20 +57,17 @@ async def voice_answer(request: Request, lead_id: int, db: Session = Depends(get
             }
             script = generate_cold_call_script(lead_dict, shop_url=shop_url)
 
-        opening = script.get(
-            "opening",
-            f"Hey {name}! It's {_agent_name()} from {_company_name()}. "
-            f"I'm reaching out because there's a free wellness opportunity closing July 4th that I think you genuinely need to hear about. "
-            f"Can I take 30 seconds to tell you what it is?"
+        opening = (
+            script.get("opening") if script else None
+        ) or (
+            f"Hey {name}! It's {_agent_name()} with Vital Health Global. "
+            f"Quick question — before July 4th you can sign up completely free for a new wellness launch called Ignty. "
+            f"It's one of the highest-paying opportunities in the industry right now and it costs nothing to get in today. "
+            f"Does that sound worth 30 seconds?"
         )
 
         gather_url = f"{_base_url()}/webhooks/voice/gather?lead_id={lead_id}"
-        from config import settings as _s
-        if _s.ELEVENLABS_API_KEY:
-            audio_url = f"{_base_url()}/webhooks/audio/lead/{lead_id}.mp3"
-            twiml = build_call_twiml_elevenlabs(opening, gather_url, audio_url)
-        else:
-            twiml = build_call_twiml(opening, gather_url)
+        twiml = build_call_twiml(opening, gather_url)
         return xml_response(twiml)
     except Exception as e:
         logger.error(f"voice_answer error for lead {lead_id}: {e}")
